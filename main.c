@@ -17,12 +17,14 @@ char *generate_text(char *type_lang);
 // variables
 char *langs[] = {"Russion", "English"};
 int choice, highlight = 0;
+char *quit_msg = "F10 Quit";
+static jmp_buf rbuf;
+sigjmp_buf scr_buf;
 
 // signal handler
-sigjmp_buf env_buf;
 void sigwinch_handler(int sig)
 {
-  siglongjmp(env_buf, 5);
+  siglongjmp(scr_buf, 5);
 }
 
 // ouput random text
@@ -32,7 +34,7 @@ void get_text()
   main_text = generate_text(langs[highlight]);
 
   while (1) {
-    if (sigsetjmp(env_buf, 5)) {
+    if (sigsetjmp(scr_buf, 5)) {
       endwin();
       clear();
     }
@@ -63,6 +65,7 @@ void get_text()
     WINDOW *text_win = newwin(20, 80, (LINES - 21) / 2, (COLS - 80) / 2);
     box(text_win, 0, 0);
 
+    // print text (extract token text before new line)
     char* token = strtok(arr, "\n");
     while (token != NULL) {
       newl++;
@@ -70,13 +73,18 @@ void get_text()
       token = strtok(NULL, "\n");
     }
     wrefresh(text_win);
-    mvprintw(LINES - 2, 1, "%s", "F9 Quit");
+
+    // print cancel / quit messages
+    mvprintw(LINES - 2, 4, "%s", "F3 Cancel");
+    mvprintw(LINES - 2, (COLS - strlen(quit_msg)) - 4, "%s", quit_msg);
 
     switch (choice = getch()) {
-      case KEY_F(9):
+      case KEY_F(10):
         endwin();
         exit(0);
-     }
+      case KEY_F(3):
+        longjmp(rbuf, 4);
+    }
   }
 }
 
@@ -90,8 +98,14 @@ int main(int argc, char *argv[])
   curs_set(0);
   keypad(stdscr, TRUE);
 
+  // return
+  if (setjmp(rbuf), 4) {
+    endwin();
+    clear();
+  }
+
   while (1) {
-    if (sigsetjmp(env_buf, 5)) {
+    if (sigsetjmp(scr_buf, 5)) {
       endwin();
       clear();
     }
@@ -127,16 +141,17 @@ int main(int argc, char *argv[])
     mvprintw(7, (COLS - strlen(lang_msg)) / 2, "%s", lang_msg); /* y, x */
     attroff(COLOR_PAIR(2));
 
-    /* print quit message */
-    mvprintw(LINES - 2, 1, "%s", "F9 Quit");
+    /* print help / quit messages */
+    mvprintw(LINES - 2, 4, "%s", "F1 Help");
+    mvprintw(LINES - 2, (COLS - strlen(quit_msg)) - 4, "%s", quit_msg);
 
     for (int index = 0; index < 2; index++) {
       if (index == highlight) {
-        attron(COLOR_PAIR(3) | A_UNDERLINE);
+        attron(A_UNDERLINE | A_BOLD);
       }
 
       mvprintw(index + 9, (COLS - strlen(langs[index])) / 2, "%s", langs[index]);
-      attroff(COLOR_PAIR(3) | A_UNDERLINE);
+      attroff(A_UNDERLINE | A_BOLD);
     }
 
     switch (choice = getch()) {
@@ -148,7 +163,7 @@ int main(int argc, char *argv[])
         highlight++;
         if (highlight == 2) highlight = 1;
         break;
-      case KEY_F(9):
+      case KEY_F(10):
         endwin();
         exit(0);
     }
