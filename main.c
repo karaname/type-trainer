@@ -1,0 +1,165 @@
+#include <ncurses.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <setjmp.h>
+#include <locale.h>
+
+//mvprintw(6, 0, "%d", LINES); // это кол-во линий, сверху вниз
+//mvprintw(7, 0, "%d", COLS);  // это кол-во колонок, слева направо
+
+// declarations
+char *generate_text(char *type_lang);
+
+// variables
+char *langs[] = {"Russion", "English"};
+int choice, highlight = 0;
+
+// signal handler
+sigjmp_buf env_buf;
+void sigwinch_handler(int sig)
+{
+  siglongjmp(env_buf, 5);
+}
+
+// ouput random text
+void get_text()
+{
+  char *main_text;
+  main_text = generate_text(langs[highlight]);
+
+  while (1) {
+    if (sigsetjmp(env_buf, 5)) {
+      endwin();
+      clear();
+    }
+
+    if (LINES < 24 || COLS < 80) {
+      endwin();
+      printf("Please, use the 'normal' terminal size - 80 columns by 24 lines\n");
+      exit(0);
+    }
+    refresh();
+
+    int i;
+    int newl = 0;
+    int len = strlen(main_text);
+    char arr[len];
+    for (i = 0; main_text[i] != '\0'; i++) {
+      arr[i] = main_text[i];
+    }
+    arr[i] = '\0';
+
+    // print funny message with colors
+    char *funny_msg = "Let's start typing ... (｡◕‿‿◕｡)";
+    attron(COLOR_PAIR(1));
+    mvprintw((LINES - 24) / 2, (COLS - strlen(funny_msg) + 9) / 2, "%s", funny_msg);
+    attroff(COLOR_PAIR(1));
+
+    // init text window
+    WINDOW *text_win = newwin(20, 80, (LINES - 21) / 2, (COLS - 80) / 2);
+    box(text_win, 0, 0);
+
+    char* token = strtok(arr, "\n");
+    while (token != NULL) {
+      newl++;
+      mvwaddstr(text_win, newl, 2, token);
+      token = strtok(NULL, "\n");
+    }
+    wrefresh(text_win);
+    mvprintw(LINES - 2, 1, "%s", "F9 Quit");
+
+    switch (choice = getch()) {
+      case KEY_F(9):
+        endwin();
+        exit(0);
+     }
+  }
+}
+
+int main(int argc, char *argv[])
+{
+  setlocale(LC_ALL, "");
+  signal(SIGWINCH, sigwinch_handler);
+
+  initscr();
+  noecho();
+  curs_set(0);
+  keypad(stdscr, TRUE);
+
+  while (1) {
+    if (sigsetjmp(env_buf, 5)) {
+      endwin();
+      clear();
+    }
+
+    if (LINES < 24 || COLS < 80) {
+      endwin();
+      printf("Please, use the 'normal' terminal size - 80 columns by 24 lines\n");
+      exit(0);
+    }
+
+    if (has_colors()) {
+      start_color();
+      init_pair(1, COLOR_CYAN, COLOR_BLACK);
+      init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
+      init_pair(3, COLOR_GREEN, COLOR_BLACK);
+    }
+    refresh();
+
+    /* init title window */
+    char *title_msg = "Simple Type Trainer, version - 1.0";
+    WINDOW *title = newwin(4, COLS, 1, 0);
+    box(title, 0, 0);
+
+    /* print title message with colors */
+    wattron(title, COLOR_PAIR(1));
+    mvwprintw(title, 1, (COLS - strlen(title_msg)) / 2, "%s", title_msg);
+    wattroff(title, COLOR_PAIR(1));
+    wrefresh(title);
+
+    /* print language message with colors */
+    char *lang_msg = "Please, select language for text:";
+    attron(COLOR_PAIR(2));
+    mvprintw(7, (COLS - strlen(lang_msg)) / 2, "%s", lang_msg); /* y, x */
+    attroff(COLOR_PAIR(2));
+
+    /* print quit message */
+    mvprintw(LINES - 2, 1, "%s", "F9 Quit");
+
+    for (int index = 0; index < 2; index++) {
+      if (index == highlight) {
+        attron(COLOR_PAIR(3) | A_UNDERLINE);
+      }
+
+      mvprintw(index + 9, (COLS - strlen(langs[index])) / 2, "%s", langs[index]);
+      attroff(COLOR_PAIR(3) | A_UNDERLINE);
+    }
+
+    switch (choice = getch()) {
+      case KEY_UP:
+        highlight--;
+        if (highlight == -1) highlight = 0;
+        break;
+      case KEY_DOWN:
+        highlight++;
+        if (highlight == 2) highlight = 1;
+        break;
+      case KEY_F(9):
+        endwin();
+        exit(0);
+    }
+
+    if (choice == 10) { // Enter
+      clear();
+      get_text();
+      break;
+    }
+  }
+
+  endwin();
+  return 0;
+}
