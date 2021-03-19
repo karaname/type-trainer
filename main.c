@@ -27,7 +27,51 @@ void sigwinch_handler(int sig)
   siglongjmp(scr_buf, 5);
 }
 
-// ouput random text
+// check 80x24 terminal size
+void term_size_check()
+{
+  if (LINES < 24 || COLS < 80) {
+    endwin();
+    printf("Please, use the 'normal' terminal size - 80 columns by 24 lines\n");
+    exit(0);
+  }
+}
+
+void help_info()
+{
+  while (1) {
+    if (sigsetjmp(scr_buf, 5)) {
+      endwin();
+      clear();
+    }
+
+    term_size_check();
+    refresh();
+
+    // create help window
+    WINDOW *help_win = newwin(22, 80, (LINES - 24) / 2, (COLS - 80) / 2);
+    box(help_win, 0, 0);
+
+    // include some info text
+    mvwaddstr(help_win, 2, 2, "1. Help info -");
+    mvwaddstr(help_win, 3, 2, "2. Help info -");
+    wrefresh(help_win);
+
+    // print cancel / quit messages
+    mvprintw(LINES - 2, 4, "%s", "F3 Cancel");
+    mvprintw(LINES - 2, (COLS - strlen(quit_msg)) - 4, "%s", quit_msg);
+
+    switch (choice = getch()) {
+      case KEY_F(10):
+        endwin();
+        exit(0);
+      case KEY_F(3):
+        longjmp(rbuf, 4);
+    }
+  }
+}
+
+// generate random text
 void get_text()
 {
   char *main_text;
@@ -39,11 +83,7 @@ void get_text()
       clear();
     }
 
-    if (LINES < 24 || COLS < 80) {
-      endwin();
-      printf("Please, use the 'normal' terminal size - 80 columns by 24 lines\n");
-      exit(0);
-    }
+    term_size_check();
     refresh();
 
     int i;
@@ -110,12 +150,7 @@ int main(int argc, char *argv[])
       clear();
     }
 
-    if (LINES < 24 || COLS < 80) {
-      endwin();
-      printf("Please, use the 'normal' terminal size - 80 columns by 24 lines\n");
-      exit(0);
-    }
-
+    term_size_check();
     if (has_colors()) {
       start_color();
       init_pair(1, COLOR_CYAN, COLOR_BLACK);
@@ -162,6 +197,10 @@ int main(int argc, char *argv[])
       case KEY_DOWN:
         highlight++;
         if (highlight == 2) highlight = 1;
+        break;
+      case KEY_F(1):
+        clear();
+        help_info();
         break;
       case KEY_F(10):
         endwin();
