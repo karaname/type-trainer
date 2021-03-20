@@ -1,5 +1,5 @@
-a.out: main.o texts.o
-	gcc -g3 main.o texts.o -lncurses
+typp: main.o texts.o
+	gcc -g3 -o typp main.o texts.o -lncurses
 
 main.o: main.c
 	gcc -g3 -c main.c

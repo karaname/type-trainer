@@ -7,17 +7,14 @@
 #include <signal.h>
 #include <setjmp.h>
 #include <locale.h>
+#define _name "typp"
 
-//mvprintw(6, 0, "%d", LINES); // это кол-во линий, сверху вниз
-//mvprintw(7, 0, "%d", COLS);  // это кол-во колонок, слева направо
-
-// declarations
 char *generate_text(char *type_lang);
 
-// variables
 char *langs[] = {"Russion", "English"};
 int choice, highlight = 0;
 char *quit_msg = "F10 Quit";
+
 static jmp_buf rbuf;
 sigjmp_buf scr_buf;
 
@@ -32,7 +29,8 @@ void term_size_check()
 {
   if (LINES < 24 || COLS < 80) {
     endwin();
-    printf("Please, use the 'normal' terminal size - 80 columns by 24 lines\n");
+    fprintf(stderr, "%s: Please, use the 'normal' terminal \
+size - 80 columns by 24 lines\n", _name);
     exit(0);
   }
 }
@@ -71,7 +69,6 @@ void help_info()
   }
 }
 
-// generate random text
 void get_text()
 {
   char *main_text;
@@ -133,7 +130,11 @@ int main(int argc, char *argv[])
   setlocale(LC_ALL, "");
   signal(SIGWINCH, sigwinch_handler);
 
-  initscr();
+  if (!initscr()) {
+    fprintf(stderr, "%s: Error initialising ncurses\n", _name);
+    exit(1);
+  }
+
   noecho();
   curs_set(0);
   keypad(stdscr, TRUE);
@@ -160,7 +161,7 @@ int main(int argc, char *argv[])
     refresh();
 
     /* init title window */
-    char *title_msg = "Simple Type Trainer, version - 1.0";
+    char *title_msg = "Typing Practice (typp)";
     WINDOW *title = newwin(4, COLS, 1, 0);
     box(title, 0, 0);
 
