@@ -16,7 +16,7 @@ int choice, highlight = 0;
 char *quit_msg = "F10 Quit";
 
 static jmp_buf rbuf;
-sigjmp_buf scr_buf;
+static sigjmp_buf scr_buf;
 
 // signal handler
 void sigwinch_handler(int sig)
@@ -101,6 +101,11 @@ void get_text()
     // init text window
     WINDOW *text_win = newwin(20, 80, (LINES - 21) / 2, (COLS - 80) / 2);
     box(text_win, 0, 0);
+    keypad(text_win, TRUE);
+
+    // print cancel / quit messages
+    mvprintw(LINES - 2, 4, "%s", "F3 Cancel");
+    mvprintw(LINES - 2, (COLS - strlen(quit_msg)) - 4, "%s", quit_msg);
 
     // print text (extract token text before new line)
     char* token = strtok(arr, "\n");
@@ -110,17 +115,17 @@ void get_text()
       token = strtok(NULL, "\n");
     }
     wrefresh(text_win);
+    refresh();
 
-    // print cancel / quit messages
-    mvprintw(LINES - 2, 4, "%s", "F3 Cancel");
-    mvprintw(LINES - 2, (COLS - strlen(quit_msg)) - 4, "%s", quit_msg);
-
-    switch (choice = getch()) {
+    int c;
+    switch (c = wgetch(text_win)) {
       case KEY_F(10):
         endwin();
         exit(0);
       case KEY_F(3):
         longjmp(rbuf, 4);
+      default:
+        mvprintw(0, 0, "%c", c);
     }
   }
 }
