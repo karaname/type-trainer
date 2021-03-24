@@ -72,7 +72,9 @@ void help_info()
 void get_text()
 {
   char *main_text;
-  main_text = generate_text(langs[highlight]);
+  //main_text = generate_text(langs[highlight]);
+  main_text = "Hello world!\n\
+Hello";
 
   while (1) {
     if (sigsetjmp(scr_buf, 5)) {
@@ -117,15 +119,32 @@ void get_text()
     wrefresh(text_win);
     refresh();
 
-    int c;
-    switch (c = wgetch(text_win)) {
-      case KEY_F(10):
-        endwin();
-        exit(0);
-      case KEY_F(3):
-        longjmp(rbuf, 4);
-      default:
-        mvprintw(0, 0, "%c", c);
+    int j = 0;
+    int ccount = 1;
+    while (arr[j] != '\0') {
+      int cuser;
+      switch (cuser = wgetch(text_win)) {
+        case KEY_F(10):
+          endwin();
+          exit(0);
+        case KEY_F(3):
+          longjmp(rbuf, 4);
+        default:
+          if (cuser == arr[j]) {
+            j++;
+            ccount++;
+            wattron(text_win, COLOR_PAIR(3) | A_UNDERLINE);
+            mvwaddch(text_win, 1, ccount, cuser);
+            wattroff(text_win, COLOR_PAIR(3) | A_UNDERLINE);
+          } else {
+            wattron(text_win, COLOR_PAIR(4) | A_UNDERLINE);
+            mvwaddch(text_win, 1, ccount + 1, arr[j]);
+            wattroff(text_win, COLOR_PAIR(4) | A_UNDERLINE);
+          }
+          //ccount++;
+          //mvwaddch(text_win, 1, ccount, cuser);
+          //wrefresh(text_win);
+      }
     }
   }
 }
@@ -162,6 +181,7 @@ int main(int argc, char *argv[])
       init_pair(1, COLOR_CYAN, COLOR_BLACK);
       init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
       init_pair(3, COLOR_GREEN, COLOR_BLACK);
+      init_pair(4, COLOR_RED, COLOR_BLACK);
     }
     refresh();
 
