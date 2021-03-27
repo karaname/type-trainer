@@ -117,10 +117,7 @@ void input_text(char *ptext, WINDOW *ptext_win)
 
 void get_text()
 {
-  char *main_text;
-  main_text = generate_text(langs[highlight]);
-
-  int index, newl = 0;
+  char *main_text = generate_text(langs[highlight]);
   int len = strlen(main_text);
   char *arr = malloc(len);
 
@@ -133,6 +130,7 @@ void get_text()
     term_size_check();
     refresh();
 
+    int index, newl = 0;
     for (index = 0; main_text[index] != '\0'; index++) {
       arr[index] = main_text[index];
     }
@@ -152,6 +150,7 @@ void get_text()
     // print cancel / quit messages
     mvprintw(LINES - 2, 4, "%s", "F3 Cancel");
     mvprintw(LINES - 2, (COLS - strlen(quit_msg)) - 4, "%s", quit_msg);
+    refresh();
 
     // print text (extract token text before new line)
     char* token = strtok(arr, "\n");
@@ -161,7 +160,6 @@ void get_text()
       token = strtok(NULL, "\n");
     }
     wrefresh(text_win);
-    refresh();
 
     // let's start user input
     input_text(main_text, text_win);
