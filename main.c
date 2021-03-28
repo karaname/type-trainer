@@ -69,10 +69,45 @@ void help_info()
   }
 }
 
+void get_result(int err)
+{
+  while (1) {
+    if (sigsetjmp(scr_buf, 5)) {
+      endwin();
+      clear();
+    }
+
+    refresh();
+    // init result window
+    WINDOW *result_win = newwin(20, 20, 1, 1);
+    box(result_win, 0, 0);
+
+    // title string with colors
+    wattron(result_win, COLOR_PAIR(2));
+    mvwaddstr(result_win, 2, (20 - strlen("Result")) / 2, "Result");
+    wattroff(result_win, COLOR_PAIR(2));
+
+    // print result info
+    char error_buf[20];
+    sprintf(error_buf, "Error count: %d", err);
+    mvwaddstr(result_win, 5, 2, error_buf);
+    wrefresh(result_win);
+    mvprintw(22, 2, "Press F3 to cancel");
+
+    // != F11
+    choice = getch();
+    if (choice != 410 && choice == KEY_F(3)) {
+      clear();
+      break;
+    }
+  }
+}
+
 void input_text(char *ptext, WINDOW *ptext_win)
 {
   int xcount = 1;
   int ycount = 1;
+  int errcount = 0;
   int cuser;
 
   while (*ptext != '\0') {
@@ -100,6 +135,8 @@ void input_text(char *ptext, WINDOW *ptext_win)
             xcount = 1;
             ycount++;
           }
+
+          errcount++;
           wattron(ptext_win, COLOR_PAIR(4) | A_UNDERLINE | A_BOLD);
           mvwaddch(ptext_win, ycount, xcount + 1, *ptext);
           wattroff(ptext_win, COLOR_PAIR(4) | A_UNDERLINE | A_BOLD);
@@ -107,12 +144,10 @@ void input_text(char *ptext, WINDOW *ptext_win)
     }
   }
 
-  // if text done - cancel
   wrefresh(ptext_win);
-  mvprintw(0, 0, "Done!");
-  refresh();
-  sleep(2);
-  longjmp(rbuf, 4);
+  sleep(1);
+  clear();
+  get_result(errcount);
 }
 
 void get_text()
@@ -163,6 +198,7 @@ void get_text()
 
     // let's start user input
     input_text(main_text, text_win);
+    break;
   }
 }
 
@@ -253,7 +289,7 @@ int main(int argc, char *argv[])
     if (choice == 10) { // Enter
       clear();
       get_text();
-      break;
+      continue;
     }
   }
 
