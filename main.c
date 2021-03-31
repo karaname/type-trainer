@@ -3,13 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/wait.h>
 #include <signal.h>
 #include <setjmp.h>
 #include <locale.h>
+#include <wchar.h>
 #define _name "typp"
 
-char *generate_text(char *type_lang);
+wchar_t *generate_text(char *type_lang);
 
 char *langs[] = {"Russion", "English"};
 int choice, highlight = 0;
@@ -105,19 +105,20 @@ void get_result(int err)
   }
 }
 
-void input_text(char *ptext, WINDOW *ptext_win)
+void input_text(wchar_t *ptext, WINDOW *ptext_win)
 {
   int xcount = 1;
   int ycount = 1;
   int errcount = 0;
-  int cuser;
+  wint_t cuser;
 
   /* set cursor normal station */
   curs_set(1);
 
   while (*ptext != '\0') {
     wmove(ptext_win, ycount, xcount + 1);
-    switch (cuser = wgetch(ptext_win)) {
+    wget_wch(ptext_win, &cuser);
+    switch (cuser) {
       case KEY_F(10):
         endwin();
         exit(0);
@@ -131,7 +132,7 @@ void input_text(char *ptext, WINDOW *ptext_win)
             ycount++;   /* go to the next line */
           } else {
             wattron(ptext_win, COLOR_PAIR(3) | A_UNDERLINE | A_BOLD);
-            mvwaddch(ptext_win, ycount, xcount, cuser);
+            mvwaddnwstr(ptext_win, ycount, xcount, &cuser, 1);
             wattroff(ptext_win, COLOR_PAIR(3) | A_UNDERLINE | A_BOLD);
           }
           ptext++;
@@ -145,13 +146,13 @@ void input_text(char *ptext, WINDOW *ptext_win)
               continue;
             }
           }
-
           errcount++;
           wattron(ptext_win, COLOR_PAIR(4) | A_UNDERLINE | A_BOLD);
-          mvwaddch(ptext_win, ycount, xcount + 1, *ptext);
+          mvwaddnwstr(ptext_win, ycount, xcount + 1, ptext, 1);
           wattroff(ptext_win, COLOR_PAIR(4) | A_UNDERLINE | A_BOLD);
         }
     }
+    refresh();
   }
 
   wrefresh(ptext_win);
@@ -163,9 +164,9 @@ void input_text(char *ptext, WINDOW *ptext_win)
 
 void get_text()
 {
-  char *main_text = generate_text(langs[highlight]);
-  int len = strlen(main_text);
-  char *arr = malloc(len);
+  wchar_t *main_text = generate_text(langs[highlight]);
+  int len = wcslen(main_text);
+  wchar_t arr[len];
 
   while (1) {
     if (sigsetjmp(scr_buf, 5)) {
@@ -176,7 +177,7 @@ void get_text()
     term_size_check();
     refresh();
 
-    /* create arr */
+    /* fill arr */
     int index, newl = 0;
     for (index = 0; main_text[index] != '\0'; index++) {
       arr[index] = main_text[index];
@@ -200,11 +201,12 @@ void get_text()
     refresh();
 
     /* print text (extract token text before new line) */
-    char* token = strtok(arr, "\n");
+    wchar_t *state;
+    wchar_t *token = wcstok(arr, L"\n", &state);
     while (token != NULL) {
       newl++;
-      mvwaddstr(text_win, newl, 2, token);
-      token = strtok(NULL, "\n");
+      mvwaddwstr(text_win, newl, 2, token);
+      token = wcstok(NULL, L"\n", &state);
     }
     wrefresh(text_win);
 
