@@ -6,3 +6,6 @@ main.o: main.c
 
 texts.o: texts.c
 	gcc -Wall -g3 -c texts.c
+
+clean:
+	rm *.o
