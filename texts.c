@@ -4,8 +4,8 @@
 
 wchar_t *generate_text(char *type_lang)
 {
-  wchar_t *ru_arr[10];
-  wchar_t *en_arr[10];
+  wchar_t *ru_arr[15];
+  wchar_t *en_arr[15];
 
   /* russion texts */
   ru_arr[0] = L"В 1901 году Тейлор снимала меблированные комнаты в мичиганском городе\n\
