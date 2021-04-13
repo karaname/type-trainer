@@ -11,15 +11,13 @@
 #define _name "typp"
 
 wchar_t *generate_text(char *type_lang);
+
 static char *langs[] = {"Русский", "English"};
 static int choice, highlight = 0;
+static int newlcount;
 static char *quit_msg = "F10 Quit";
 static jmp_buf rbuf;
 static sigjmp_buf scr_buf;
-static int newlcount;
-static int errcount;
-static int scount;  /* symbol count */
-static int sscount; /* symbol count without space */
 
 /* signal handler */
 void sigwinch_handler()
@@ -72,7 +70,7 @@ void help_info()
   }
 }
 
-void get_result()
+void get_result(int errcount, int scount, int sscount, int wcount)
 {
   while (1) {
     if (sigsetjmp(scr_buf, 5)) {
@@ -84,34 +82,39 @@ void get_result()
     refresh();
 
     /* init result window */
-    WINDOW *result_win = newwin(20, 30, 1, 1);
+    WINDOW *result_win = newwin(20, 32, 1, 1);
     box(result_win, 0, 0);
 
     /* title string with colors */
-    wattron(result_win, COLOR_PAIR(2));
-    mvwaddstr(result_win, 2, (30 - strlen("Result")) / 2, "Result");
-    wattroff(result_win, COLOR_PAIR(2));
+    wattron(result_win, COLOR_PAIR(2) | A_BOLD | A_UNDERLINE);
+    mvwaddstr(result_win, 2, (32 - strlen("Result")) / 2, "Result");
+    wattroff(result_win, COLOR_PAIR(2) | A_BOLD | A_UNDERLINE);
 
     /* result info */
     /* errors */
     char error_buf[30];
-    sprintf(error_buf, "Errors: %14d", errcount);
+    sprintf(error_buf, "Errors: %16d", errcount);
     mvwaddstr(result_win, 5, 2, error_buf);
+
+    /* words */
+    char wcount_buf[30];
+    sprintf(wcount_buf, "Words: %17d", wcount);
+    mvwaddstr(result_win, 7, 2, wcount_buf);
 
     /* lines */
     char lcount_buf[30];
-    sprintf(lcount_buf, "Text lines: %10d", newlcount);
-    mvwaddstr(result_win, 6, 2, lcount_buf);
+    sprintf(lcount_buf, "Text lines: %12d", newlcount);
+    mvwaddstr(result_win, 8, 2, lcount_buf);
 
     /* all symbols */
     char scount_buf[30];
-    sprintf(scount_buf, "Total characters: %4d", scount);
-    mvwaddstr(result_win, 7, 2, scount_buf);
+    sprintf(scount_buf, "Total symbols: %9d", scount);
+    mvwaddstr(result_win, 9, 2, scount_buf);
 
-    /* symbols without space */
+    /* symbols without spaces */
     char sscount_buf[30];
-    sprintf(sscount_buf, "Without spaces: %6d", sscount);
-    mvwaddstr(result_win, 8, 2, sscount_buf);
+    sprintf(sscount_buf, "Symbols less spaces: %3d", sscount);
+    mvwaddstr(result_win, 10, 2, sscount_buf);
 
     wrefresh(result_win);
     mvprintw(22, 2, "Press F3 to cancel");
@@ -125,20 +128,16 @@ void get_result()
 
 void input_text(wchar_t *ptext, WINDOW *ptext_win)
 {
-  /* counters */
   int xcount = 1;
   int ycount = 1;
-  errcount = 0;
-  scount = 0;
-  sscount = 0;
-  /* pointer begin ptext (need for counting) */
-  wchar_t *ptext_st = ptext;
-  /* user input */
-  wint_t cuser;
+  int errcount = 0;
+  int sscount = 0;
+  int wcount = 0;
+  size_t scount, lent;
+  wchar_t *ptext_st = ptext; /* pointer begin ptext (need for counting) */
+  wint_t cuser; /* user input */
 
-  /* set cursor normal station */
-  curs_set(1);
-
+  curs_set(1); /* set cursor normal station */
   while (*ptext != '\0') {
     wmove(ptext_win, ycount, xcount + 1);
     wget_wch(ptext_win, &cuser);
@@ -155,9 +154,9 @@ void input_text(wchar_t *ptext, WINDOW *ptext_win)
             xcount = 1; /* back to first */
             ycount++;   /* go to the next line */
           } else {
-            wattron(ptext_win, COLOR_PAIR(3) | A_UNDERLINE | A_BOLD);
+            wattron(ptext_win, COLOR_PAIR(3) | A_BOLD);
             mvwaddnwstr(ptext_win, ycount, xcount, &cuser, 1);
-            wattroff(ptext_win, COLOR_PAIR(3) | A_UNDERLINE | A_BOLD);
+            wattroff(ptext_win, COLOR_PAIR(3) | A_BOLD);
           }
           ptext++;
           wmove(ptext_win, ycount, xcount + 1);
@@ -171,21 +170,32 @@ void input_text(wchar_t *ptext, WINDOW *ptext_win)
             }
           }
           errcount++;
-          wattron(ptext_win, COLOR_PAIR(4) | A_UNDERLINE | A_BOLD);
+          wattron(ptext_win, COLOR_PAIR(4) | A_BOLD);
           mvwaddnwstr(ptext_win, ycount, xcount + 1, ptext, 1);
-          wattroff(ptext_win, COLOR_PAIR(4) | A_UNDERLINE | A_BOLD);
+          wattroff(ptext_win, COLOR_PAIR(4) | A_BOLD);
         }
     }
     refresh();
   }
   wrefresh(ptext_win);
 
-  /* counting characters */
+  /* total symbols counting, don't count new lines */
   scount = (wcslen(ptext_st) - (newlcount - 1));
-  for (sscount = 0; *ptext_st != '\0'; ptext_st++) {
+
+  /* words counting */
+  lent = wcslen(ptext_st);
+  for(int i = 0; i <= lent; i++) {
+    if(isspace(ptext_st[i]) || ptext_st[i] == '\0') {
+      wcount++;
+    }
+  }
+
+  /* symbols counting, without spaces */
+  while (*ptext_st != '\0') {
     if (!(isspace(*ptext_st))) {
       sscount++;
     }
+    ptext_st++;
   }
 
   while (choice = getch()) {
@@ -196,14 +206,14 @@ void input_text(wchar_t *ptext, WINDOW *ptext_win)
     }
   }
 
-  get_result();
+  get_result(errcount, scount, sscount, wcount);
 }
 
 void get_text()
 {
   wchar_t *main_text = generate_text(langs[highlight]);
-  int len = wcslen(main_text);
-  wchar_t arr[len];
+  size_t lent = wcslen(main_text);
+  wchar_t arr[lent];
   int index;
 
   while (1) {
