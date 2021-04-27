@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <time.h>
+#include <math.h>
 #define _name "typp"
 
 wchar_t *generate_text(char *type_lang);
@@ -78,6 +79,10 @@ get_result(int errcount, int scount, int sscount, int wcount, int sec)
   int m, s;
   char time_buf[30];
   char error_buf[30];
+  char roundt_buf[8];
+  char lang_buf[30];
+  char wpm_buf[30];
+  char cpm_buf[30];
   char wcount_buf[30];
   char lcount_buf[30];
   char scount_buf[30];
@@ -110,17 +115,37 @@ get_result(int errcount, int scount, int sscount, int wcount, int sec)
     sprintf(error_buf, "Errors: %18d", errcount);
     mvwaddstr(result_win, 5, 2, error_buf);
 
+    if (s >= 30 && s <= 40) {
+      s = 5;
+    } else if (s < 30) {
+      s = 0;
+    } else if (s > 40) {
+      m++; s = 0;
+    }
+
+    sprintf(roundt_buf, "%d.%d", m, s);
+    if ((strcmp(langs[highlight], "English")) == 0) {
+      sprintf(wpm_buf, "WPM: %21.0f", round(((scount / 5) - errcount) / (double)atof(roundt_buf)));
+      mvwaddstr(result_win, 7, 2, wpm_buf);
+    } else {
+      sprintf(cpm_buf, "CPM: %21.0f", round(scount / (double)atof(roundt_buf)));
+      mvwaddstr(result_win, 7, 2, cpm_buf);
+    }
+
+    sprintf(lang_buf, "Text: %s", langs[highlight]);
+    mvwaddstr(result_win, 9, 2, lang_buf);
+
     sprintf(wcount_buf, "Words: %19d", wcount);
-    mvwaddstr(result_win, 7, 2, wcount_buf);
+    mvwaddstr(result_win, 10, 2, wcount_buf);
 
     sprintf(lcount_buf, "Text lines: %14d", newlcount);
-    mvwaddstr(result_win, 8, 2, lcount_buf);
+    mvwaddstr(result_win, 11, 2, lcount_buf);
 
     sprintf(scount_buf, "Total symbols: %11d", scount);
-    mvwaddstr(result_win, 9, 2, scount_buf);
+    mvwaddstr(result_win, 12, 2, scount_buf);
 
     sprintf(sscount_buf, "Symbols less spaces: %5d", sscount);
-    mvwaddstr(result_win, 10, 2, sscount_buf);
+    mvwaddstr(result_win, 13, 2, sscount_buf);
 
     wrefresh(result_win);
     mvprintw(22, 2, "Press F3 to cancel");

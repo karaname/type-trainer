@@ -1,5 +1,5 @@
 typp: main.o texts.o
-	gcc `pkg-config ncursesw --libs --cflags` -Wall -g3 -o typp main.o texts.o -lncurses
+	gcc `pkg-config ncursesw --libs --cflags` -Wall -g3 -o typp main.o texts.o -lncurses -lm
 
 main.o: main.c
 	gcc `pkg-config ncursesw --libs --cflags` -Wall -g3 -c main.c
