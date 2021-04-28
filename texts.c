@@ -8,25 +8,38 @@ wchar_t *generate_text(char *type_lang)
   wchar_t *en_arr[15];
 
   /* russion texts */
-  ru_arr[0] = L"В 1901 году Тейлор снимала меблированные комнаты в мичиганском городе\n\
-Бей-Сити, когда ей попалась на глаза реклама международной Панамериканской\n\
-выставки, проходившей в эти дни в Буффало. Помимо прочего посетителям\n\
-предлагалось посетить находящийся неподалёку Ниагарский водопад.\n\
-Буквально на днях там был совершён очередной трюк: ремесленник Карлайл Грэм,\n\
-рекламируя свою новую бочку, уже в пятый раз прокатился внутри неё\n\
-по порогам нижнего течения Ниагары, включая труднопроходимый водоворот на\n\
-повороте реки.";
+  ru_arr[0] = L"Разнообразный и богатый опыт говорит нам, что постоянное\n\
+информационно-пропагандистское обеспечение нашей деятельности позволяет\n\
+выполнить важные задания по разработке стандартных подходов. Значимость\n\
+этих проблем настолько очевидна, что базовый вектор развития является\n\
+качественно новой ступенью поэтапного и последовательного развития общества.\n\
+Прежде всего, современная методология разработки напрямую зависит от как\n\
+самодостаточных, так и внешне зависимых концептуальных решений. Являясь\n\
+всего лишь частью общей картины, базовые сценарии поведения пользователей\n\
+обнародованы. Также как синтетическое тестирование позволяет выполнить\n\
+важные задания по разработке распределения внутренних резервов и ресурсов!\n\
+Высокий уровень вовлечения представителей целевой аудитории является четким\n\
+доказательством простого факта: базовый вектор развития требует от нас\n\
+анализа существующих финансовых и административных условий. Мы вынуждены\n\
+отталкиваться от того, что новая модель организационной деятельности говорит\n\
+о возможностях глубокомысленных рассуждений.";
 
-  ru_arr[1] = L"Основой устройства механической машины являются механизмы\n\
-(например, кривошипно-шатунный механизм как часть паровой машины).\n\
-Внешне разные машины могут содержать подобные или схожие механизмы.\n\
-Но наиболее важные составляющие, остаются неизменными всегда, во всех\n\
-машинах, такие как: двигатель, подвижные части и т.д. Машина состоит из\n\
-двигателя как источника энергии (движения), передаточного и исполнительного\n\
-устройств и системы управления. Вместе первые три части обычно называют\n\
-машинным агрегатом. Механическое передаточное устройство называют\n\
-передаточным механизмом, а механическое исполнительное устройство\n\
-- исполнительным механизмом.";
+  ru_arr[1] = L"Мы вынуждены отталкиваться от того, что выбранный нами инновационный путь\n\
+напрямую зависит от позиций, занимаемых участниками в отношении поставленных\n\
+задач! Для современного мира высококачественный прототип будущего проекта\n\
+представляет собой интересный эксперимент проверки существующих финансовых\n\
+и административных условий. Есть над чем задуматься: предприниматели в сети\n\
+интернет, которые представляют собой яркий пример континентально-европейского\n\
+типа политической культуры, будут ограничены исключительно образом мышления.\n\
+В рамках спецификации современных стандартов, некоторые особенности\n\
+внутренней политики формируют глобальную экономическую сеть и при этом,\n\
+описаны максимально подробно. Равным образом, укрепление и развитие\n\
+внутренней структуры играет важную роль в формировании новых принципов\n\
+формирования материально-технической и кадровой базы. В целом, конечно,\n\
+укрепление и развитие внутренней структуры обеспечивает широкому кругу\n\
+(специалистов) участие в формировании переосмысления внешнеэкономических\n\
+политик. А ещё интерактивные прототипы неоднозначны и будут в равной степени\n\
+предоставлены сами себе.";
 
   ru_arr[2] = L"Идею нового фильма предложил Яков Костюковский, прочитавший\n\
 в журнале \"За рубежом\" заметку о европейских мошенниках, использовавших для\n\
@@ -142,31 +155,39 @@ wchar_t *generate_text(char *type_lang)
 Являясь всего лишь частью общей картины, акционеры крупнейших компаний\n\
 неоднозначны и будут в равной степени предоставлены сами себе.";
 
-  ru_arr[9] = L"Равным образом повышение уровня гражданского сознания позволяет оценить\n\
-значение дальнейших направлений развитая системы массового участия?\n\
-Повседневная практика показывает, что постоянный количественный рост и сфера\n\
-нашей активности в значительной степени обуславливает создание всесторонне\n\
-сбалансированных нововведений. Дорогие друзья, рамки и место обучения кадров\n\
-обеспечивает широкому кругу специалистов участие в формировании всесторонне\n\
-сбалансированных нововведений. Соображения высшего порядка, а также\n\
-постоянное информационно-техническое обеспечение нашей деятельности напрямую\n\
-зависит от форм воздействия. Повседневная практика показывает, что начало\n\
-повседневной работы по формированию позиции позволяет оценить значение новых\n\
-предложений.";
+  ru_arr[9] = L"С другой стороны, базовый вектор развития говорит о возможностях\n\
+приоритизации разума над эмоциями. Как принято считать, явные признаки\n\
+победы институционализации преданы социально-демократической анафеме.\n\
+Прежде всего, повышение уровня гражданского сознания играет определяющее\n\
+значение для как самодостаточных, так и внешне зависимых концептуальных\n\
+решений. Как принято считать, интерактивные прототипы объявлены нарушающими\n\
+общечеловеческие нормы этики и морали. С учётом сложившейся международной\n\
+обстановки, понимание сути ресурсосберегающих технологий выявляет срочную\n\
+потребность дальнейших направлений развития. В рамках спецификации\n\
+современных стандартов, тщательные исследования конкурентов функционально\n\
+разнесены на независимые элементы. В частности, понимание сути\n\
+ресурсосберегающих технологий, в своём классическом представлении, допускает\n\
+внедрение первоочередных требований. В целом, конечно, укрепление и развитие\n\
+внутренней структуры не оставляет шанса для инновационных методов управления\n\
+процессами!";
 
-  ru_arr[10] = L"Практический опыт показывает, что постоянное информационно-техническое\n\
-обеспечение нашей деятельности играет важную роль в формировании\n\
-существующих финансовых и административных условий! Дорогие друзья,\n\
-повышение уровня гражданского сознания обеспечивает актуальность\n\
-всесторонне сбалансированных нововведений. С другой стороны курс на\n\
-социально-ориентированный национальный проект требует от нас системного\n\
-анализа существующих финансовых и административных условий? Значимость этих\n\
-проблем настолько очевидна, что сложившаяся структура организации создаёт\n\
-предпосылки качественно новых шагов для форм воздействия. Дорогие друзья,\n\
-консультация с профессионалами из IT позволяет выполнить важнейшие задания\n\
-по разработке новых предложений! Практический опыт показывает, что рамки и\n\
-место обучения кадров играет важную роль в формировании направлений\n\
-прогрессивного развития.";
+  ru_arr[10] = L"В своём стремлении улучшить пользовательский опыт мы упускаем, что ключевые\n\
+особенности структуры проекта лишь добавляют фракционных разногласий и\n\
+своевременно верифицированы. Лишь акционеры крупнейших компаний освещают\n\
+чрезвычайно интересные особенности картины в целом, однако конкретные\n\
+выводы, разумеется, смешаны с не уникальными данными до степени совершенной\n\
+неузнаваемости, из-за чего возрастает их статус бесполезности. Равным\n\
+образом, перспективное планирование, в своём классическом представлении,\n\
+допускает внедрение своевременного выполнения сверхзадачи. А ещё сторонники\n\
+тоталитаризма в науке могут быть объявлены нарушающими общечеловеческие\n\
+нормы этики и морали. Предварительные выводы неутешительны: консультация с\n\
+широким активом однозначно определяет каждого участника как способного\n\
+принимать собственные решения касаемо инновационных методов управления\n\
+процессами. Имеется спорная точка зрения, гласящая примерно следующее:\n\
+представители современных социальных резервов могут быть объявлены\n\
+нарушающими общечеловеческие нормы этики и морали. Приятно, граждане,\n\
+наблюдать, как базовые сценарии поведения пользователей преданы\n\
+социально-демократической анафеме.";
 
   /* english texts */
   en_arr[0] = L"John draw real poor on call my from. May she mrs furnished discourse\n\
@@ -203,24 +224,28 @@ motionless not collecting age. The properly servants required mistaken\n\
 outlived bed and. Remainder admitting neglected is he belonging to perpetual\n\
 objection up. Has widen too you decay begin which asked equal any.";
 
-  en_arr[3] = L"Their could can widen ten she any. As so we smart those money in.\n\
-Am wrote up whole so tears sense oh. Absolute required of reserved in\n\
-offering no. How sense found our those gay again taken the. Had mrs outweigh\n\
-desirous sex overcame. Improved property reserved disposal do offering me.\n\
-May musical arrival beloved luckily adapted him. Shyness mention married son\n\
-she his started now. Rose if as past near were. To graceful he elegance oh\n\
-moderate attended entrance pleasure. Vulgar saw fat sudden edward way played\n\
-either. Thoughts smallest at or peculiar relation breeding produced an.\n\
-At depart spirit on stairs. She the either are wisdom praise things she\n\
-before. Be mother itself vanity favour do me of. Begin sex was power joy\n\
-after had walls miles.";
+  en_arr[3] = L"Extremity sweetness difficult behaviour he of. On disposal of as landlord\n\
+horrible. Afraid at highly months do things on at. Situation recommend\n\
+objection do intention so questions. As greatly removed calling pleased\n\
+improve an. Last ask him cold feel met spot shy want. Children me laughing\n\
+we prospect answered followed. At it went is song that held help face.\n\
+Alteration literature to or an sympathize mr imprudence. Of is ferrars\n\
+subject as enjoyed or tedious cottage. Procuring as in resembled by in\n\
+agreeable. Next long no gave mr eyes. Admiration advantages no he celebrated\n\
+so pianoforte unreserved. Not its herself forming charmed amiable. Him why\n\
+feebly expect future now.";
 
-  en_arr[4] = L"It took seven years of planning and 70,000 volunteers to make everything\n\
-go well. Many people have said that the organisation was not as perfect\n\
-as that of the Beijing Games, but there was a much better atmosphere which\n\
-spread out through the whole city. The volunteers were always friendly\n\
-and helpful and Londoners even began talking to each other, and visitors,\n\
-on the underground trains!";
+  en_arr[4] = L"Started earnest brother believe an exposed so. Me he believing daughters if\n\
+forfeited at furniture. Age again and stuff downs spoke. Late hour new nay\n\
+able fat each sell. Nor themselves age introduced frequently use unsatiable\n\
+devonshire get. They why quit gay cold rose deal park. One same they four\n\
+did ask busy. Reserved opinions fat him nay position. Breakfast as zealously\n\
+incommode do agreeable furniture. One too nay led fanny allow plate. An an\n\
+valley indeed so no wonder future nature vanity. Debating all she mistaken\n\
+indulged believed provided declared. He many kept on draw lain song as same.\n\
+Whether at dearest certain spirits is entered in to. Rich fine bred real use\n\
+too many good. She compliment unaffected expression favourable any. Unknown\n\
+chiefly showing to conduct no. Hung as love evil able to post at as.";
 
   en_arr[5] = L"Now for manners use has company believe parlors. Least nor party who wrote\n\
 while did. Excuse formed as is agreed admire so on result parish.\n\
@@ -233,16 +258,17 @@ furnished. Met the why particular devonshire decisively considered\n\
 partiality. Certain it waiting no entered is. Passed her indeed uneasy shy\n\
 polite appear denied. Oh less girl no walk. At he spot with five of view.";
 
-  en_arr[6] = L"Entire any had depend and figure winter. Change stairs and men likely\n\
-wisdom new happen piqued six. Now taken him timed sex world get.\n\
-Enjoyed married an feeling delight pursuit as offered. As admire roused\n\
-length likely played pretty to no. Means had joy miles her merry solid\n\
-order. Received shutters expenses ye he pleasant. Drift as blind above\n\
-at up. No up simple county stairs do should praise as. Drawings sir gay\n\
-together landlord had law smallest. Formerly welcomed attended declared\n\
-met say unlocked. Jennings outlived no dwelling denoting in peculiar as\n\
-he believed. Behaviour excellent middleton be as it curiosity departure\n\
-ourselves.";
+  en_arr[6] = L"Offered say visited elderly and. Waited period are played family man formed.\n\
+He ye body or made on pain part meet. You one delay nor begin our folly\n\
+abode. By disposed replying mr me unpacked no. As moonlight of my resolving\n\
+unwilling. Suppose end get boy warrant general natural. Delightful met\n\
+sufficient projection ask. Decisively everything principles if preference do\n\
+impression of. Preserved oh so difficult repulsive on in household. In what\n\
+do miss time be. Valley as be appear cannot so by. Convinced resembled\n\
+dependent remainder led zealously his shy own belonging. Always length\n\
+letter adieus add number moment she. Promise few compass six several old\n\
+offices removal parties fat. Concluded rapturous it intention perfectly\n\
+daughters is as.";
 
   en_arr[7] = L"Arrived compass prepare an on as. Reasonable particular on my it in\n\
 sympathize. Size now easy eat hand how. Unwilling he departure elsewhere\n\
@@ -282,17 +308,17 @@ result depart supply. Required honoured trifling eat pleasure man relation.\n\
 Assurance yet bed was improving furniture man. Distrusts delighted she\n\
 listening mrs extensive admitting far.";
 
-  en_arr[10] = L"Much evil soon high in hope do view. Out may few northward believing\n\
-attempted. Yet timed being songs marry one defer men our. Although\n\
-finished blessing do of. Consider speaking me prospect whatever if.\n\
-Ten nearer rather hunted six parish indeed number. Allowance repulsive\n\
-sex may contained can set suspected abilities cordially. Do part am he\n\
-high rest that. So fruit to ready it being views match. To sorry world\n\
-an at do spoil along. Incommode he depending do frankness remainder to.\n\
-Edward day almost active him friend thirty piqued. People as period twenty\n\
-my extent as. Set was better abroad ham plenty secure had horses. Admiration\n\
-has sir decisively excellence say everything inhabiting acceptance.\n\
-Sooner settle add put you sudden him.";
+  en_arr[10] = L"Now indulgence dissimilar for his thoroughly has terminated. Agreement\n\
+offending commanded my an. Change wholly say why eldest period. Are\n\
+projection put celebrated particular unreserved joy unsatiable its. In then\n\
+dare good am rose bred or. On am in nearer square wanted. Silent sir say\n\
+desire fat him letter. Whatever settling goodness too and honoured she\n\
+building answered her. Strongly thoughts remember mr to do consider\n\
+debating. Spirits musical behaved on we he farther letters. Repulsive\n\
+he he as deficient newspaper dashwoods we. Discovered her his pianoforte\n\
+insipidity entreaties. Began he at terms meant as fancy. Breakfast arranging\n\
+he if furniture we described on. Astonished thoroughly unpleasant especially\n\
+you dispatched bed favourable.";
 
   srand(time(NULL));
   if (strcmp(type_lang, "English") == 0) {
