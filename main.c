@@ -20,10 +20,11 @@ static int choice, highlight = 0;
 static int newlcount;
 static char *quit_msg = "F10 Quit";
 static char *rating = NULL;
-static jmp_buf rbuf;
+static jmp_buf rbuf, hbuf;
 static sigjmp_buf scr_buf;
 
-/* signal handler */
+/* signal handler, returns to the beginning of the loop
+recalculate LINES and COLS values */
 void sigwinch_handler()
 {
   siglongjmp(scr_buf, 5);
@@ -34,14 +35,66 @@ void term_size_check()
 {
   if (LINES < 24 || COLS < 80) {
     endwin();
-    fprintf(stderr, "%s: Please, use the 'normal' terminal \
-size - 80 columns by 24 lines\n", _name);
+    fprintf(stderr, "%s: Please, use the normal terminal \
+size, not less 80 columns by 24 lines\n", _name);
     exit(0);
+  }
+}
+
+void rating_info()
+{
+  while (1) {
+    if (sigsetjmp(scr_buf, 5)) {
+      endwin();
+      clear();
+    }
+
+    term_size_check();
+    refresh();
+
+    /* create rating window */
+    WINDOW *rat_win = newwin(22, 80, (LINES - 24) / 2, (COLS - 80) / 2);
+    box(rat_win, 0, 0);
+
+    /* include info about ratings */
+    mvwaddstr(rat_win, 0, (80 - strlen("Help")) / 2, "Help");
+    mvwaddstr(rat_win, 1, 1, "WPM rating:");
+    mvwaddstr(rat_win, 2, 2, "less 24 (slow)");
+    mvwaddstr(rat_win, 3, 2, "more or equal 24 and less 32 (fine)");
+    mvwaddstr(rat_win, 4, 2, "more or equal 32 and less 52 (middle)");
+    mvwaddstr(rat_win, 5, 2, "more or equal 52 and less 70 (well)");
+    mvwaddstr(rat_win, 6, 2, "more or equal 70 and less or equal 80 (pro)");
+    mvwaddstr(rat_win, 7, 2, "more 80 (best)");
+    mvwaddstr(rat_win, 10, 1, "CPM rating:");
+    mvwaddstr(rat_win, 11, 2, "less 120 (slow)");
+    mvwaddstr(rat_win, 12, 2, "more or equal 120 and less 160 (fine)");
+    mvwaddstr(rat_win, 13, 2, "more or equal 160 and less 260 (middle)");
+    mvwaddstr(rat_win, 14, 2, "more or equal 260 and less 350 (well)");
+    mvwaddstr(rat_win, 15, 2, "more or equal 350 and less or equal 400 (pro)");
+    mvwaddstr(rat_win, 16, 2, "more 400 (best)");
+    wrefresh(rat_win);
+
+    /* print cancel / quit messages */
+    mvprintw(LINES - 2, 4, "%s", "F3 Cancel");
+    mvprintw(LINES - 2, (COLS - strlen(quit_msg)) - 4, "%s", quit_msg);
+
+    switch (choice = getch()) {
+      case KEY_F(10):
+        endwin();
+        exit(0);
+      case KEY_F(3):
+        longjmp(hbuf, 5);
+    }
   }
 }
 
 void help_info()
 {
+  if (setjmp(hbuf), 5) {
+    endwin();
+    clear();
+  }
+
   while (1) {
     if (sigsetjmp(scr_buf, 5)) {
       endwin();
@@ -56,8 +109,23 @@ void help_info()
     box(help_win, 0, 0);
 
     /* include some info text */
-    mvwprintw(help_win, 1, 1, "Help");
-    //mvwaddstr(help_win, 1, 1, "Help info");
+    mvwaddstr(help_win, 0, (80 - strlen("Help")) / 2, "Help");
+    mvwaddstr(help_win, 1, 1, "This free software, and you are welcome to redistribute in under terms of");
+    mvwaddstr(help_win, 2, 1, "MIT License. This software is intended for the practice of typing text from");
+    mvwaddstr(help_win, 3, 1, "the keyboard.");
+    mvwaddstr(help_win, 5, 1, "From the available texts \"English\" and \"Russian\".");
+    mvwaddstr(help_win, 6, 1, "WPM (words per minute) is used to calculate the speed of English texts.");
+    mvwaddstr(help_win, 7, 1, "CPM (characters per minute) is used to calculate the speed of Russion texts.");
+    mvwaddstr(help_win, 8, 1, "To type faster, use the touch typing method.");
+    mvwaddstr(help_win, 10, 1, "You can use the keys of keyboard to navigate (up / down).");
+    mvwaddstr(help_win, 11, 1, "It is recommended to use a terminal size of at least 80x24.");
+    mvwaddstr(help_win, 13, 1, "After entering the text, the results will appear, along with the rating.");
+    mvwaddstr(help_win, 14, 1, "To see the description of ratings, press");
+    wattron(help_win, A_UNDERLINE | A_STANDOUT);
+    mvwaddstr(help_win, 14, 42, "Enter");
+    wattroff(help_win, A_UNDERLINE | A_STANDOUT);
+    mvwaddstr(help_win, 19, 1, "Typing Practice - version.");
+    mvwaddstr(help_win, 20, 1, "Typing Practice written by Kirill Rekhov <rekhov.ka@gmail.com>");
     wrefresh(help_win);
 
     /* print cancel / quit messages */
@@ -70,40 +138,43 @@ void help_info()
         exit(0);
       case KEY_F(3):
         longjmp(rbuf, 4);
+      case 10:
+        delwin(help_win);
+        rating_info();
     }
   }
 }
 
-void get_wpm_rat(int wv)
+void get_wpm_rat(int wpmv)
 {
-  if (wv < 24) {
+  if (wpmv < 24) {
     rating = "slow";
-  } else if (wv >= 24 && wv < 32) {
+  } else if (wpmv >= 24 && wpmv < 32) {
     rating = "fine";
-  } else if (wv >= 32 && wv < 52) {
+  } else if (wpmv >= 32 && wpmv < 52) {
     rating = "middle";
-  } else if (wv >= 52 && wv < 70) {
+  } else if (wpmv >= 52 && wpmv < 70) {
     rating = "well";
-  } else if (wv >= 70 && wv <= 80) {
+  } else if (wpmv >= 70 && wpmv <= 80) {
     rating = "pro";
-  } else if (wv > 80) {
+  } else if (wpmv > 80) {
     rating = "best";
   }
 }
 
-void get_cpm_rat(int cv)
+void get_cpm_rat(int cpmv)
 {
-  if (cv < 120) {
+  if (cpmv < 120) {
     rating = "slow";
-  } else if (cv >= 120 && cv < 160) {
+  } else if (cpmv >= 120 && cpmv < 160) {
     rating = "fine";
-  } else if (cv >= 160 && cv < 260) {
+  } else if (cpmv >= 160 && cpmv < 260) {
     rating = "middle";
-  } else if (cv >= 260 && cv < 350) {
+  } else if (cpmv >= 260 && cpmv < 350) {
     rating = "well";
-  } else if (cv >= 350 && cv < 400) {
+  } else if (cpmv >= 350 && cpmv < 400) {
     rating = "pro";
-  } else if (cv > 400) {
+  } else if (cpmv > 400) {
     rating = "best";
   }
 }
@@ -212,7 +283,7 @@ void input_text(wchar_t *ptext, WINDOW *ptext_win)
       case KEY_F(10):
         endwin();
         exit(0);
-      case KEY_F(3): /* cancel */
+      case KEY_F(3):
         longjmp(rbuf, 4);
       default:
         if (cuser == *ptext) {
@@ -356,7 +427,7 @@ int main(void)
     exit(1);
   }
 
-  // cancel
+  /* cancel to main menu (select langs) */
   if (setjmp(rbuf), 4) {
     endwin();
     clear();
@@ -424,16 +495,13 @@ int main(void)
       case KEY_F(1):
         clear();
         help_info();
-        break;
       case KEY_F(10):
         endwin();
         exit(0);
-    }
-
-    if (choice == 10) { // enter
-      clear();
-      get_text();
-      continue;
+      case 10: /* KEY_ENTER not working, so 10 ... */
+        clear();
+        get_text();
+        continue;
     }
   }
 
