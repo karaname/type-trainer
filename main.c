@@ -124,7 +124,7 @@ void help_info()
     wattron(help_win, A_UNDERLINE | A_STANDOUT);
     mvwaddstr(help_win, 14, 42, "Enter");
     wattroff(help_win, A_UNDERLINE | A_STANDOUT);
-    mvwaddstr(help_win, 19, 1, "Typing Practice - version.");
+    mvwaddstr(help_win, 19, 1, "Typing Practice - v0.1.0");
     mvwaddstr(help_win, 20, 1, "Typing Practice written by Kirill Rekhov <rekhov.ka@gmail.com>");
     wrefresh(help_win);
 
@@ -454,7 +454,7 @@ int main(void)
     refresh();
 
     /* init title window */
-    char *title_msg = "Typing Practice (typp)";
+    char *title_msg = "Typing Practice (typp) - v0.1.0";
     WINDOW *title = newwin(4, COLS, 1, 0);
     box(title, 0, 0);
 
