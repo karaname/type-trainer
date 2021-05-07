@@ -1,4 +1,4 @@
-Requires installation:
+Requires Installation:
 pkg-config
 automake
 autoconf
@@ -9,4 +9,7 @@ make
 gcc
 
 Spell:
-autoreconf -iv && ./configure && make && ./typp
+autoreconf -iv && ./configure && make install
+
+File Structure:
+/usr/local/bin/typp
