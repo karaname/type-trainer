@@ -1,8 +1,0 @@
-Before compilation need install:
-automake
-autoconf
-pkg-config
-libncurses5-dev
-libncursesw5-dev
-
-Then: cd src && autoreconf -iv && ./configure && make && ./typp

@@ -1,0 +1,12 @@
+Requires installation:
+pkg-config
+automake
+autoconf
+binutils
+ncurses
+glibc
+make
+gcc
+
+Spell:
+autoreconf -iv && ./configure && make && ./typp
