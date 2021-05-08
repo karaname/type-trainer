@@ -1,0 +1,13 @@
+v0.1.0 (alpha version, start tests on other platforms)
+  * menu with languages (English / Russion)
+  * choice language
+  * get random text, 100+ words
+  * check for terminal size
+  * added user input / move cursor
+  * added result / counting - errors, words, etc.
+  * added wpm for en texts / cpm for ru texts
+  * solved UTF-8 problems
+  * added 'Help' / 'Cancel' / 'Quit' functional (jumps)
+  * added user rating (slow, fine, middle, well, pro, best)
+  * added a description to the program (Help)
+  * ignore SIGINT
