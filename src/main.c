@@ -133,18 +133,19 @@ void help_info()
     mvwaddstr(help_win, 1, 1, "This free software, and you are welcome to redistribute in under terms of");
     mvwaddstr(help_win, 2, 1, "MIT License. This software is intended for the practice of typing text from");
     mvwaddstr(help_win, 3, 1, "the keyboard.");
-    mvwaddstr(help_win, 5, 1, "From the available texts \"English\" and \"Russian\".");
-    mvwaddstr(help_win, 6, 1, "WPM (words per minute) is used to calculate the speed of English texts.");
-    mvwaddstr(help_win, 7, 1, "CPM (characters per minute) is used to calculate the speed of Russion texts.");
-    mvwaddstr(help_win, 8, 1, "To type faster, use the touch typing method.");
-    mvwaddstr(help_win, 10, 1, "You can use the keys of keyboard to navigate (up / down).");
-    mvwaddstr(help_win, 11, 1, "It is recommended to use a terminal size of at least 80x24.");
-    mvwaddstr(help_win, 13, 1, "After entering the text, the results will appear, along with the rating.");
-    mvwaddstr(help_win, 14, 1, "To see the description of ratings, press");
+    mvwaddstr(help_win, 5, 1, "From the available texts 'English' and 'Russian'.");
+    mvwaddstr(help_win, 6, 1, "For correct display 'Russian' symbols recommended use UTF-8 charset.");
+    mvwaddstr(help_win, 7, 1, "WPM (words per minute) is used to calculate the speed of English texts.");
+    mvwaddstr(help_win, 8, 1, "CPM (characters per minute) is used to calculate the speed of Russion texts.");
+    mvwaddstr(help_win, 9, 1, "To type faster, use the touch typing method.");
+    mvwaddstr(help_win, 11, 1, "You can use the keys of keyboard to navigate (up / down).");
+    mvwaddstr(help_win, 12, 1, "It is recommended to use a terminal size of at least 80x24.");
+    mvwaddstr(help_win, 14, 1, "After entering the text, the results will appear, along with the rating.");
+    mvwaddstr(help_win, 15, 1, "To see the description of ratings, press");
     wattron(help_win, A_UNDERLINE | A_STANDOUT);
-    mvwaddstr(help_win, 14, 42, "Enter");
+    mvwaddstr(help_win, 15, 42, "Enter");
     wattroff(help_win, A_UNDERLINE | A_STANDOUT);
-    mvwaddstr(help_win, 19, 1, "Typing Practice - v0.1.1");
+    mvwaddstr(help_win, 19, 1, "Typing Practice - v0.1.2");
     mvwaddstr(help_win, 20, 1, "Typing Practice written by Kirill Rekhov <rekhov.ka@gmail.com>");
     wrefresh(help_win);
 
@@ -469,7 +470,7 @@ int main(void)
     refresh();
 
     /* init title window */
-    char *title_msg = "Typing Practice (typp) - v0.1.1";
+    char *title_msg = "Typing Practice (typp) - v0.1.2";
     WINDOW *title = newwin(4, COLS, 1, 0);
     box(title, 0, 0);
 

@@ -1,16 +1,19 @@
-Requires Installation:
-ncursesw development libraries
-pkg-config
-automake
-autoconf
-binutils
-ncurses
-glibc
-make
-gcc
+--- Requires Installation:
+* ncursesw development library (For example on Ubuntu: sudo apt install libncursesw5-dev)
+* pkg-config
+* automake
+* autoconf
+* binutils
+* ncurses
+* glibc
+* make
+* gcc
 
-Spell:
+--- Make sure charset is set to UTF-8
+run the 'locale' command
+
+--- Spell
 autoreconf -iv && ./configure && sudo make install
 
-File Structure:
+--- File Structure
 /usr/local/bin/typp
