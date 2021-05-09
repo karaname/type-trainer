@@ -1,4 +1,5 @@
 Requires Installation:
+ncursesw development libraries
 pkg-config
 automake
 autoconf
