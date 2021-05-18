@@ -17,3 +17,5 @@ autoreconf -iv && ./configure && sudo make install
 
 --- File Structure
 /usr/local/bin/typp
+/usr/local/share/typp/eng.typp
+/usr/local/share/typp/rus.typp

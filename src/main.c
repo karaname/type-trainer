@@ -31,20 +31,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdbool.h>
 #include <time.h>
 #include <math.h>
+#include <errno.h>
 #define _name "typp"
 
-wchar_t *generate_text(char *type_lang);
+int choice, highlight = 0;
+char *langs[] = {"Russian", "English"};
+char *quit_msg = "F10 Quit", *rating;
+size_t newlcount;
+jmp_buf rbuf, hbuf;
+sigjmp_buf scr_buf;
 
-static char *langs[] = {"Русский", "English"};
-static int choice, highlight = 0;
-static int newlcount;
-static char *quit_msg = "F10 Quit";
-static char *rating = NULL;
-static jmp_buf rbuf, hbuf;
-static sigjmp_buf scr_buf;
-
-/* signal handler, returns to the beginning of the loop
-recalculate LINES and COLS values */
+/*
+signal handler, returns to the beginning of the loop
+recalculate LINES and COLS values
+*/
 void sigwinch_handler()
 {
   siglongjmp(scr_buf, 5);
@@ -136,7 +136,7 @@ void help_info()
     mvwaddstr(help_win, 5, 1, "From the available texts 'English' and 'Russian'.");
     mvwaddstr(help_win, 6, 1, "For correct display 'Russian' symbols recommended use UTF-8 charset.");
     mvwaddstr(help_win, 7, 1, "WPM (words per minute) is used to calculate the speed of English texts.");
-    mvwaddstr(help_win, 8, 1, "CPM (characters per minute) is used to calculate the speed of Russion texts.");
+    mvwaddstr(help_win, 8, 1, "CPM (characters per minute) is used to calculate the speed of Russian texts.");
     mvwaddstr(help_win, 9, 1, "To type faster, use the touch typing method.");
     mvwaddstr(help_win, 11, 1, "You can use the keys of keyboard to navigate (up / down).");
     mvwaddstr(help_win, 12, 1, "It is recommended to use a terminal size of at least 80x24.");
@@ -145,7 +145,7 @@ void help_info()
     wattron(help_win, A_UNDERLINE | A_STANDOUT);
     mvwaddstr(help_win, 15, 42, "Enter");
     wattroff(help_win, A_UNDERLINE | A_STANDOUT);
-    mvwaddstr(help_win, 19, 1, "Typing Practice - v0.1.2");
+    mvwaddstr(help_win, 19, 1, "Typing Practice - v1.1.3");
     mvwaddstr(help_win, 20, 1, "Typing Practice written by Kirill Rekhov <rekhov.ka@gmail.com>");
     wrefresh(help_win);
 
@@ -166,45 +166,30 @@ void help_info()
   }
 }
 
-void get_wpm_rat(int wpmv)
+void get_wpm_rat(int wpm)
 {
-  if (wpmv < 24) {
-    rating = "slow";
-  } else if (wpmv >= 24 && wpmv < 32) {
-    rating = "fine";
-  } else if (wpmv >= 32 && wpmv < 52) {
-    rating = "middle";
-  } else if (wpmv >= 52 && wpmv < 70) {
-    rating = "well";
-  } else if (wpmv >= 70 && wpmv <= 80) {
-    rating = "pro";
-  } else if (wpmv > 80) {
-    rating = "best";
-  }
+  if (wpm < 24) rating = "slow";
+  if (wpm >= 24 && wpm < 32) rating = "fine";
+  if (wpm >= 32 && wpm < 52) rating = "middle";
+  if (wpm >= 52 && wpm < 70) rating = "well";
+  if (wpm >= 70 && wpm < 80) rating = "pro";
+  if (wpm >= 80) rating = "best";
 }
 
-void get_cpm_rat(int cpmv)
+void get_cpm_rat(int cpm)
 {
-  if (cpmv < 120) {
-    rating = "slow";
-  } else if (cpmv >= 120 && cpmv < 160) {
-    rating = "fine";
-  } else if (cpmv >= 160 && cpmv < 260) {
-    rating = "middle";
-  } else if (cpmv >= 260 && cpmv < 350) {
-    rating = "well";
-  } else if (cpmv >= 350 && cpmv < 400) {
-    rating = "pro";
-  } else if (cpmv > 400) {
-    rating = "best";
-  }
+  if (cpm < 120) rating = "slow";
+  if (cpm >= 120 && cpm < 160) rating = "fine";
+  if (cpm >= 160 && cpm < 260) rating = "middle";
+  if (cpm >= 260 && cpm < 350) rating = "well";
+  if (cpm >= 350 && cpm < 400) rating = "pro";
+  if (cpm >= 400) rating = "best";
 }
 
-void
-get_result(int errcount, int scount, int sscount, int wcount, int sec)
+void get_result(int errcount, int scount, int sscount, int wcount, int sec)
 {
   int m, s, wpm, cpm;
-  char roundt_buf[15];
+  char roundtime_arr[20];
 
   while (1) {
     if (sigsetjmp(scr_buf, 5)) {
@@ -219,6 +204,7 @@ get_result(int errcount, int scount, int sscount, int wcount, int sec)
     m = sec / 60;
     s = sec - (m * 60);
 
+    /* time round, for example: 1.50 ~ 2 minutes */
     if (s >= 30 && s <= 40) {
       s = 5;
     } else if (s < 30) {
@@ -227,15 +213,18 @@ get_result(int errcount, int scount, int sscount, int wcount, int sec)
       m++; s = 0;
     }
 
-    sprintf(roundt_buf, "%d.%d", m, s);
-    wpm = (int)round(((scount / 5) - errcount) / (double)atof(roundt_buf));
-    cpm = (int)round(scount / (double)atof(roundt_buf));
+    sprintf(roundtime_arr, "%d.%d", m, s);
+    wpm = (int)round(((scount / 5) - errcount) / (double)atof(roundtime_arr));
+    cpm = (int)round(scount / (double)atof(roundtime_arr));
 
     /* get user rating */
-    if ((strcmp(langs[highlight], "English")) == 0) {
-      get_wpm_rat(wpm);
-    } else {
-      get_cpm_rat(cpm);
+    switch (highlight) {
+      case 0:
+        get_cpm_rat(cpm);
+        break;
+      case 1:
+        get_wpm_rat(wpm);
+        break;
     }
 
     /* init result window */
@@ -258,10 +247,13 @@ get_result(int errcount, int scount, int sscount, int wcount, int sec)
     mvwprintw(result_win, 7, 2, "Time(m:s) %14.2d:%.2d", m, s);
     mvwprintw(result_win, 8, 2, "Errors: %18d", errcount);
 
-    if ((strcmp(langs[highlight], "English")) == 0) {
-      mvwprintw(result_win, 10, 2, "WPM: %21d", wpm);
-    } else {
-      mvwprintw(result_win, 10, 2, "CPM: %21d", cpm);
+    switch (highlight) {
+      case 0:
+        mvwprintw(result_win, 10, 2, "CPM: %21d", cpm);
+        break;
+      case 1:
+        mvwprintw(result_win, 10, 2, "WPM: %21d", wpm);
+        break;
     }
 
     mvwprintw(result_win, 12, 2, "Text: %s", langs[highlight]);
@@ -282,67 +274,77 @@ get_result(int errcount, int scount, int sscount, int wcount, int sec)
 
 void input_text(wchar_t *ptext, WINDOW *ptext_win)
 {
-  time_t start_t, end_t;
-  int xcount = 1;
-  int ycount = 1;
-  int errcount = 0;
-  int sscount = 0;
-  int wcount = 0;
-  int sec;
-  size_t scount, lent;
+  /* counters */
+  size_t xcount = 1, ycount = 1;
+  size_t errcount = 0, sscount = 0, wcount = 0;
+  size_t sec, scount;
+  int lent;
+  /* etc */
   wchar_t *ptext_st = ptext; /* pointer begin ptext (need for counting) */
-  wint_t cuser; /* user input */
-  bool bv = false;
+  wint_t cuser;              /* user input */
+  bool err_bool = false;     /* boolean for error counting */
+  time_t start_t, end_t;     /* need for user input time */
 
-  curs_set(1); /* set cursor normal station */
+  curs_set(1);               /* set cursor normal station */
   time(&start_t);
+
+  /*
+    if the user enters Russian characters, they will be displayed incorrectly
+    for this is used wide characters. so that there is a correct comparison,
+    display in terminal, etc.
+  */
 
   while (*ptext != '\0') {
     wmove(ptext_win, ycount, xcount + 1);
-    wget_wch(ptext_win, &cuser);
-    switch (cuser) {
-      case KEY_F(10):
-        endwin();
-        exit(0);
-      case KEY_F(3):
-        longjmp(rbuf, 4);
-      default:
-        if (cuser == *ptext) {
-          xcount++;
-          if (cuser == 10) {
-            xcount = 1; /* back to first */
-            ycount++;   /* go to the next line */
-          } else {
-            wattron(ptext_win, COLOR_PAIR(3) | A_BOLD);
-            mvwaddnwstr(ptext_win, ycount, xcount, (wchar_t *)&cuser, 1);
-            wattroff(ptext_win, COLOR_PAIR(3) | A_BOLD);
-          }
-          ptext++;
-          wmove(ptext_win, ycount, xcount + 1);
-          bv = false;
-        } else {
-          if (*ptext == 10) {
-            ptext++;
-            xcount = 1;
-            ycount++;
-            if (cuser == 32) {
-              continue;
+    if (wget_wch(ptext_win, &cuser) != ERR) {
+      switch (cuser) {
+        case KEY_F(10):
+          endwin();
+          exit(0);
+        case KEY_F(3):
+          longjmp(rbuf, 4);
+        default:
+          if (*ptext == cuser) {
+            xcount++;
+            if (cuser == 10) {
+              xcount = 1; /* back to first */
+              ycount++;   /* go to the next line */
+            } else {
+              wattron(ptext_win, COLOR_PAIR(3) | A_BOLD);
+              mvwaddnwstr(ptext_win, ycount, xcount, (wchar_t *)&cuser, 1);
+              wattroff(ptext_win, COLOR_PAIR(3) | A_BOLD);
             }
-          }
 
-          if (bv == false) {
-            errcount++;
-            bv = true;
-          }
+            ptext++;
+            wmove(ptext_win, ycount, xcount + 1);
+            err_bool = false;
+          } else {
+            if (*ptext == 10) {
+              ptext++;
+              xcount = 1;
+              ycount++;
+              if (cuser == 32) {
+                continue;
+              }
+            }
 
-          wattron(ptext_win, COLOR_PAIR(4) | A_BOLD);
-          mvwaddnwstr(ptext_win, ycount, xcount + 1, ptext, 1);
-          wattroff(ptext_win, COLOR_PAIR(4) | A_BOLD);
-        }
+            if (err_bool == false) {
+              errcount++;
+              err_bool = true;
+            }
+
+            wattron(ptext_win, COLOR_PAIR(4) | A_BOLD);
+            mvwaddnwstr(ptext_win, ycount, xcount + 1, ptext, 1);
+            wattroff(ptext_win, COLOR_PAIR(4) | A_BOLD);
+          }
+      }
+    } else {
+      longjmp(rbuf, 4);
     }
+
     refresh();
+    wrefresh(ptext_win);
   }
-  wrefresh(ptext_win);
 
   /* total symbols counting, don't count new lines */
   scount = (wcslen(ptext_st) - (newlcount - 1));
@@ -373,16 +375,91 @@ void input_text(wchar_t *ptext, WINDOW *ptext_win)
     }
   }
 
+  /* return float number (diff seconds) for example: 80.000000 */
   sec = difftime(end_t, start_t);
   get_result(errcount, scount, sscount, wcount, sec);
 }
 
+wchar_t *generate_text(char *file, int offset[])
+{
+  wint_t c;
+  FILE *stream;
+  size_t i = 0;
+  wchar_t *buftext;
+  char textf[35] = "/usr/local/share/typp/";
+
+  strcat(textf, file);
+  if ((stream = fopen(textf, "r")) == NULL) {
+    if (errno == ENOENT) {
+      endwin();
+      fprintf(stderr, "%s: %s - %s\n", _name, strerror(errno), textf);
+      exit(1);
+    }
+
+    if (errno == EACCES) {
+      endwin();
+      fprintf(stderr, "%s: %s - %s\n", _name, strerror(errno), textf);
+      exit(1);
+    }
+
+    /* another error */
+    endwin();
+    fprintf(stderr, "%s: %s\n", _name, strerror(errno));
+    exit(1);
+  }
+
+  if ((buftext = malloc(1024 * sizeof(wchar_t *))) == NULL) {
+    endwin();
+    fprintf(stderr, "%s: malloc buffer error\n", _name);
+    exit(1);
+  }
+
+  srand(time(NULL));
+  fseek(stream, offset[rand() % 11], SEEK_SET);
+
+  while ((c = fgetwc(stream))) {
+    if (c == '#') {
+      buftext[i] = '\0';
+      break;
+    }
+
+    buftext[i] = c;
+    i++;
+  }
+  fclose(stream);
+
+  return buftext;
+}
+
 void get_text()
 {
-  wchar_t *main_text = generate_text(langs[highlight]);
-  size_t lent = wcslen(main_text);
-  wchar_t arr[lent];
-  int index;
+  WINDOW *text_win;
+  wchar_t *main_text, *token, *state;
+  char *funny_msg;
+  size_t lent, i;
+
+  /* array of number bytes where texts started */
+  int ru_offset[] = {
+    0, 1979, 4088, 5729,
+    7563, 9597, 11677, 13789,
+    15999, 18145, 20059
+  };
+
+  int en_offset[] = {
+    0, 787, 1410, 2140,
+    2825, 3654, 4385, 5140,
+    5960, 6755, 7509
+  };
+
+  /* main_text point to random text */
+  switch (highlight) {
+    case 0:
+      main_text = generate_text("rus.typp", ru_offset);
+      break;
+    case 1:
+      main_text = generate_text("eng.typp", en_offset);
+      break;
+  }
 
   while (1) {
     if (sigsetjmp(scr_buf, 5)) {
@@ -390,40 +467,44 @@ void get_text()
       clear();
     }
 
+    /* default check */
     term_size_check();
     refresh();
 
-    /* fill arr */
-    for (index = 0; main_text[index] != '\0'; index++) {
-      arr[index] = main_text[index];
-    }
-    arr[index] = '\0';
-
     /* print funny message with colors */
-    char *funny_msg = "Let's start typing ...";
+    funny_msg = "Let's start typing ...";
     attron(COLOR_PAIR(1));
     mvprintw((LINES - 24) / 2, (COLS - strlen(funny_msg)) / 2, "%s", funny_msg);
     attroff(COLOR_PAIR(1));
 
     /* init text window */
-    WINDOW *text_win = newwin(20, 80, (LINES - 21) / 2, (COLS - 80) / 2);
+    text_win = newwin(20, 80, (LINES - 21) / 2, (COLS - 80) / 2);
     box(text_win, 0, 0);
     keypad(text_win, TRUE);
 
     /* print cancel / quit messages */
     mvprintw(LINES - 2, 4, "%s", "F3 Cancel");
     mvprintw(LINES - 2, (COLS - strlen(quit_msg)) - 4, "%s", quit_msg);
-    refresh();
 
-    /* print text (extract token text before new line) */
+    /* create text_arr */
+    lent = wcslen(main_text);
+    wchar_t text_arr[lent];
+
+    /* fill array to the text (need for wcstok func.) */
+    for (i = 0; main_text[i] != '\0'; i++) {
+      text_arr[i] = main_text[i];
+    } text_arr[i] = '\0';
+
+    /* extract tokens (lines) from text, and display it to TUI */
     newlcount = 0;
-    wchar_t *state;
-    wchar_t *token = wcstok(arr, L"\n", &state);
+    token = wcstok(text_arr, L"\n", &state);
     while (token != NULL) {
       newlcount++;
       mvwaddwstr(text_win, newlcount, 2, token);
       token = wcstok(NULL, L"\n", &state);
     }
+
+    refresh();
     wrefresh(text_win);
 
     /* let's start user input */
@@ -470,7 +551,7 @@ int main(void)
     refresh();
 
     /* init title window */
-    char *title_msg = "Typing Practice (typp) - v0.1.2";
+    char *title_msg = "Typing Practice (typp) - v1.1.3";
     WINDOW *title = newwin(4, COLS, 1, 0);
     box(title, 0, 0);
 
@@ -482,9 +563,9 @@ int main(void)
 
     /* print language message with colors */
     char *lang_msg = "Please, select language for text:";
-    attron(COLOR_PAIR(2));
+    attron(COLOR_PAIR(2) | A_BOLD);
     mvprintw(7, (COLS - strlen(lang_msg)) / 2, "%s", lang_msg); /* y, x */
-    attroff(COLOR_PAIR(2));
+    attroff(COLOR_PAIR(2) | A_BOLD);
 
     /* print help / quit messages */
     mvprintw(LINES - 2, 4, "%s", "F1 Help");
@@ -511,6 +592,7 @@ int main(void)
       case KEY_F(1):
         clear();
         help_info();
+        break;
       case KEY_F(10):
         endwin();
         exit(0);
