@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT(typp, v1.1.3, rekhov.ka@gmail.com)
+AC_INIT(typp, v1.1.4, rekhov.ka@gmail.com)
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
 
@@ -25,5 +25,5 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_CHECK_FUNCS([setlocale])
 
-AC_CONFIG_FILES([Makefile src/Makefile texts/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile texts/Makefile man/Makefile])
 AC_OUTPUT
