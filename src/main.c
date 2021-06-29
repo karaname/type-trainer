@@ -55,7 +55,7 @@ struct tui_elements {
 #define BOX_WBORDER_ZERO(W) (box(W, 0, 0))
 #define END_CLEAR endwin(); clear();
 #define END_CLEAR_REFRESH endwin(); clear(); refresh();
-#define VERSION "Typing Practice - v1.1.5"
+#define VERSION "Typing Practice - v1.1.6"
 #define QUIT_KEY "F10 Quit"
 #define CANCEL_KEY "F3 Cancel"
 #define HELP_KEY "F1 Help"
@@ -270,16 +270,17 @@ int wcount, int sec)
 }
 
 void
-input_text(wchar_t *main_text, WINDOW *text_win)
+input_text_and_free(wchar_t *main_text, WINDOW *text_win)
 {
   wchar_t *pts = main_text;     /* pointer to the beginning of the text (need for counting) */
+  wchar_t error_char[2];        /* in case of discrepancy */
   wint_t cuser;                 /* user input character */
   bool err_bool = false;        /* boolean for error counting */
   time_t start_t, end_t;        /* need for user input time */
   size_t sec, scount;
   size_t xcount = 1, ycount = 1;
   size_t errcount = 0, sscount = 0, wcount = 0;
-  int lent;
+  int lent, wc = 0;
 
   curs_set(1);                  /* set cursor normal station */
   time(&start_t);
@@ -287,7 +288,7 @@ input_text(wchar_t *main_text, WINDOW *text_win)
   /* if the user enters Russian characters, they will be displayed incorrectly
      for this is used wide characters. so that there is a correct comparison,
      display in terminal, etc. */
-  while (*main_text != '\0') {
+  while (main_text[wc] != '\0') {
     wmove(text_win, ycount, xcount + 1);
     if (wget_wch(text_win, &cuser) != ERR) {
       switch (cuser) {
@@ -297,7 +298,7 @@ input_text(wchar_t *main_text, WINDOW *text_win)
         case KEY_F(3):
           longjmp(rbuf, 4);
         default:
-          if (*main_text == cuser) {
+          if (main_text[wc] == cuser) {
             xcount++;
             if (cuser == ASCII_ENTER) {
               xcount = 1;  /* back to first character of line */
@@ -308,12 +309,12 @@ input_text(wchar_t *main_text, WINDOW *text_win)
               wattroff(text_win, COLOR_BOLD(3));
             }
 
-            main_text++;
+            wc++;
             wmove(text_win, ycount, xcount + 1);
             err_bool = false;
           } else {
-            if (*main_text == ASCII_ENTER) {
-              main_text++;
+            if (main_text[wc] == ASCII_ENTER) {
+              wc++;
               xcount = 1;
               ycount++;
 
@@ -326,12 +327,14 @@ input_text(wchar_t *main_text, WINDOW *text_win)
               err_bool = true;
             }
 
+            swprintf(error_char, 2, L"%lc", main_text[wc]);
             wattron(text_win, COLOR_BOLD(4));
-            mvwaddnwstr(text_win, ycount, xcount + 1, main_text, 1);
+            mvwaddnwstr(text_win, ycount, xcount + 1, error_char, 1);
             wattroff(text_win, COLOR_BOLD(4));
           }
       }
     } else {
+      free(main_text);
       longjmp(rbuf, 4);
     }
 
@@ -359,6 +362,7 @@ input_text(wchar_t *main_text, WINDOW *text_win)
   /* wait enter from user */
   while ((cg = getch())) {
     if (cg == ASCII_ENTER) {
+      free(main_text);
       time(&end_t);
       curs_set(0);
       clear();
@@ -415,7 +419,7 @@ void
 display_text(wchar_t *main_text, WINDOW *text_win)
 {
   wchar_t *token, *state, *pt;
-  size_t text_len = wcslen(main_text) * sizeof(wchar_t *);
+  size_t text_len = wcslen(main_text) * sizeof(wchar_t);
 
   if ((pt = malloc(text_len)) == NULL) {
     endwin();
@@ -440,7 +444,7 @@ display_text(wchar_t *main_text, WINDOW *text_win)
 
 void get_text()
 {
-  wchar_t *main_text = malloc(2048 * sizeof(wchar_t *));
+  wchar_t *main_text = malloc(2048 * sizeof(wchar_t));
   if (main_text == NULL) {
     endwin();
     perror("typp");
@@ -485,7 +489,7 @@ void get_text()
   mvprintw(LINES - 2, (COLS - strlen(QUIT_KEY)) - 4, "%s", QUIT_KEY);
 
   display_text(main_text, tuiv.text_win);
-  input_text(main_text, tuiv.text_win);
+  input_text_and_free(main_text, tuiv.text_win);
 }
 
 int main(void)

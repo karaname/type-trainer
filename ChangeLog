@@ -1,3 +1,6 @@
+v1.1.6
+  * free memory / correcting mallocs
+
 v1.1.5
   * rewritten some code
 
