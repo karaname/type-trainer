@@ -53,7 +53,7 @@ struct tui_elements {
 #define BOX_WBORDER_ZERO(W) (box(W, 0, 0))
 #define END_CLEAR endwin(); clear();
 #define END_CLEAR_REFRESH endwin(); clear(); refresh();
-#define VERSION "Typing Practice - v1.1.10"
+#define VERSION "Typing Practice - v1.1.11"
 #define QUIT_MSG "F10 Quit"
 #define CANCEL_MSG "F3 Cancel"
 #define HELP_MSG "F1 Help"
@@ -269,7 +269,6 @@ input_text(wchar_t *main_text, size_t lent, WINDOW *text_win)
   int wc = 0;
 
   curs_set(1);                  /* set cursor normal station */
-  time(&start_t);
 
   /* if the user enters Russian characters, they will be displayed incorrectly
      for this is used wide characters. so that there is a correct comparison,
@@ -277,6 +276,8 @@ input_text(wchar_t *main_text, size_t lent, WINDOW *text_win)
   while (main_text[wc] != '\0') {
     wmove(text_win, ycount, xcount + 1);
     wget_wch(text_win, &cuser);
+    if (wc == 0)
+      time(&start_t);
 
     switch (cuser) {
       case KEY_F(10):
