@@ -1,3 +1,6 @@
+v1.1.12
+  * fix malloc size value (display_text)
+
 v1.1.11
   * time starts with typing
 

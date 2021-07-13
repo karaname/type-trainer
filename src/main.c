@@ -53,7 +53,7 @@ struct tui_elements {
 #define BOX_WBORDER_ZERO(W) (box(W, 0, 0))
 #define END_CLEAR endwin(); clear();
 #define END_CLEAR_REFRESH endwin(); clear(); refresh();
-#define VERSION "Typing Practice - v1.1.11"
+#define VERSION "Typing Practice - v1.1.12"
 #define QUIT_MSG "F10 Quit"
 #define CANCEL_MSG "F3 Cancel"
 #define HELP_MSG "F1 Help"
@@ -357,20 +357,19 @@ void
 display_text(wchar_t *main_text, size_t lent, WINDOW *text_win)
 {
   wchar_t *token, *state, *pt;
-  size_t text_len = 2048 * sizeof(wchar_t) + 1;
+  size_t wtext_len = lent * sizeof(wchar_t) + sizeof(int);
 
-  pt = malloc_wrap(text_len);
-  memcpy(pt, main_text, text_len);
+  pt = malloc_wrap(wtext_len);
+  memcpy(pt, main_text, wtext_len);
 
   token = wcstok(pt, L"\n", &state);
   for (newlcount = 1; token != NULL; newlcount++) {
     mvwaddwstr(tuiv.text_win, newlcount, 2, token);
     token = wcstok(NULL, L"\n", &state);
   }
-
   newlcount--;
-  free(pt);
 
+  free(pt);
   refresh();
   wrefresh(tuiv.text_win);
 }
