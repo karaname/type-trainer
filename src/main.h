@@ -42,7 +42,7 @@ struct tui_elements {
     return;
 
 #define program_name "typp"
-#define VERSION "Typing Practice - v1.3.14"
+#define VERSION "Typing Practice - v1.3.15"
 #define QUIT_MSG "F10 Quit"
 #define CANCEL_MSG "F3 Cancel"
 #define HELP_MSG "F1 Help"
@@ -50,4 +50,5 @@ struct tui_elements {
 #define ASCII_ENTER 10
 #define ASCII_SPACE 32
 #define ASCII_DEL 127
+#define NICKNAME_LEN 18
 

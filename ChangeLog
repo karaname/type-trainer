@@ -1,3 +1,8 @@
+v1.3.15
+  * fix form (get_user_nickname)
+  * correct wrap malloc
+  * another corrections
+
 v1.3.14
   * added menu for display server results
   * changed error handler

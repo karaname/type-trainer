@@ -46,10 +46,10 @@ void endwin_error_wrap(const char *s, int line)
   exit(EXIT_FAILURE);
 }
 
-void *malloc_wrap(size_t size)
+void *malloc_wrap(size_t num, size_t size)
 {
   void *p;
-  if ((p = malloc(size * sizeof(wchar_t))) == NULL)
+  if ((p = malloc(num * size)) == NULL)
     endwin_error_wrap("Cannot allocate memory", __LINE__);
   return p;
 }
@@ -150,8 +150,9 @@ int connect_to_server()
 
 void get_results_from_server(char *upper_npm)
 {
-  char cpm_or_wpm[4], all_results[2048], *token;
-  int client_sock;
+  /* all_results - размер массива ??? */
+  char cpm_or_wpm[4], all_results[2048];
+  int client_sock, len_res;
 
   for (int i = 0; upper_npm[i] != '\0'; i++)
     cpm_or_wpm[i] = tolower(upper_npm[i]);
@@ -165,14 +166,12 @@ void get_results_from_server(char *upper_npm)
   if (write(client_sock, cpm_or_wpm, strlen(cpm_or_wpm)) != 3)
     endwin_error_wrap("write() condition did not pass", __LINE__);
 
-  if ((recv(client_sock, all_results, sizeof(all_results), 0)) == -1)
+  if ((len_res = recv(client_sock, all_results, sizeof(all_results), 0)) == -1)
     endwin_error_wrap("recv() returned negative value", __LINE__);
   close(client_sock);
 
-  token = strtok(all_results, "\n");
-  for (int y = 0; token != NULL; y++) {
-    mvprintw(y, 0, "%s", token);
-    token = strtok(NULL, "\n");
+  for (int i = 0; i < len_res; i++) {
+    printw("%c", all_results[i]);
   }
 
   getch();
@@ -260,7 +259,7 @@ char *trim_whitespaces(char *str)
     return str;
 
   /* trim trailing space */
-  end = str + strnlen(str, 18) - 1;
+  end = str + strnlen(str, NICKNAME_LEN) - 1;
 
   while(end > str && isspace(*end))
     end--;
@@ -271,13 +270,12 @@ char *trim_whitespaces(char *str)
   return str;
 }
 
-char *get_user_nickname()
+void get_user_nickname(char *nickname)
 {
-  char *strnick;
   int ch;
 
   /* Initialize the fields */
-  tuiv.field[0] = new_field(1, 18, 15, (COLS - 18) / 2, 0, 0);
+  tuiv.field[0] = new_field(1, NICKNAME_LEN, 15, (COLS - NICKNAME_LEN) / 2, 0, 0);
   tuiv.field[1] = NULL;
 
   /* Set field options */
@@ -310,8 +308,8 @@ char *get_user_nickname()
         curs_set(0);
         form_driver(tuiv.form, REQ_NEXT_FIELD);
         form_driver(tuiv.form, REQ_PREV_FIELD);
-        strnick = trim_whitespaces(field_buffer(tuiv.field[0], 0));
-        if (strnick[0] == '\0') {
+        strcpy(nickname, trim_whitespaces(field_buffer(tuiv.field[0], 0)));
+        if (nickname[0] == '\0') {
           curs_set(1);
           mvprintw(0, 0, "Please, input your nickname");
           pos_form_cursor(tuiv.form);
@@ -320,14 +318,11 @@ char *get_user_nickname()
           unpost_form(tuiv.form);
           free_form(tuiv.form);
           free_field(tuiv.field[0]);
-/* Эта вещь зачищает память соответственно указатель strnick на эту память будет выдавать мусор
-и на сервер прилетит garbage nickname, решение состоит в том чтобы создать массив с длинной 32 и записать туда эти байты */
-          return strnick;
+          return;
         }
 
       case_EXIT;
-      case KEY_F(3):
-        return NULL;
+      case_CANCEL;
 
       default:
         if (isprint(ch) && (!(isspace(ch))))
@@ -335,8 +330,6 @@ char *get_user_nickname()
         break;
     }
   }
-
-  return NULL;
 }
 
 char *get_wpm_rating(int wpm)
@@ -365,8 +358,8 @@ void
 display_result(int errcount, int scount, int sscount,
                int wcount, float sec)
 {
-  char *rating, *nickname;
   int m, s, npm = 0, client_sock;
+  char *rating, *nickname;
   float t;
 
   /* convert */
@@ -421,18 +414,17 @@ display_result(int errcount, int scount, int sscount,
     switch (getch()) {
       case_CANCEL;
       case ASCII_ENTER:
-        nickname = get_user_nickname();
-        if (nickname != NULL) {
-          if ((client_sock = connect_to_server()) == -1) {
-            close(client_sock);
-            clear();
-            return;
-          }
-          send_res_to_server(client_sock, lang_highlight, nickname, npm, errcount, m, s);
-          mvprintw(0, 0, "%s - your result was sent successfully.", nickname);
-          mvprintw(1, 0, "Press any key...");
-          getch();
+        nickname = malloc_wrap(NICKNAME_LEN, sizeof(char));
+        get_user_nickname(nickname);
+        if ((client_sock = connect_to_server()) == -1) {
+          close(client_sock);
+          clear();
+          return;
         }
+        send_res_to_server(client_sock, lang_highlight, nickname, npm, errcount, m, s);
+        mvprintw(0, 0, "%s - your result was sent successfully.", nickname);
+        mvprintw(1, 0, "Press any key...");
+        getch();
         return;
     }
   }
@@ -538,7 +530,7 @@ display_text(wchar_t *main_text, size_t lent, WINDOW *text_win)
   wchar_t *token, *state, *pt;
   size_t wtext_len = lent * sizeof(wchar_t) + sizeof(int);
 
-  pt = malloc_wrap(wtext_len);
+  pt = malloc_wrap(wtext_len, sizeof(wchar_t));
   memcpy(pt, main_text, wtext_len);
 
   token = wcstok(pt, L"\n", &state);
@@ -556,10 +548,10 @@ display_text(wchar_t *main_text, size_t lent, WINDOW *text_win)
 size_t
 get_text_and_len(wchar_t *main_text, char *name, int offsets[])
 {
+  char fpath[30] = "/usr/local/share/typp/";
+  FILE *stream;
   size_t n;
   wint_t c;
-  FILE *stream;
-  char fpath[32] = "/usr/local/share/typp/";
 
   strcat(fpath, name);
   if ((stream = fopen(fpath, "r")) == NULL)
@@ -596,10 +588,10 @@ void lets_start_type()
   int en_offsets[] = {
     0, 787, 1410, 2140,
     2825, 3654, 4385, 5140,
-    5960, 6755, 7509  // , 8271
+    5960, 6755, 7509
   };
 
-  main_text = malloc_wrap(2048);
+  main_text = malloc_wrap(2048, sizeof(wchar_t));
   if (lang_highlight)
     lent = get_text_and_len(main_text, "eng.typp", en_offsets);
   else
