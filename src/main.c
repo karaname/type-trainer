@@ -28,79 +28,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <locale.h>
 #include <wchar.h>
 #include <ctype.h>
-#include <stdbool.h>
 #include <time.h>
 #include <math.h>
 #include <errno.h>
 #include <error.h>
+#include <assert.h>
+#include <stdbool.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include "main.h"
 
-size_t newlcount;
-int cg, lang_highlight = 0;
-char *langs[2] = {"Russian", "English"};
-bool send_res_to_server(int ln, const char *nickname,
-     int npm, int err, int m, int s);
-
-struct tui_elements {
-  WINDOW *main_title_win;
-  WINDOW *result_win;
-  WINDOW *text_win;
-  WINDOW *help_win;
-  WINDOW *rating_win;
-  FIELD *field[2];
-  FORM *form;
-  const char *main_title;
-  const char *sel_lang_title;
-  const char *note_msg;
-  const char *nick_msg;
-} tuiv;
-
-#define COLOR_BOLD(N) (COLOR_PAIR(N) | A_BOLD)
-#define BOX_WBORDER_ZERO(W) (box(W, 0, 0))
-
-#define END_CLEAR endwin(); clear();
-#define END_CLEAR_REFRESH endwin(); clear(); refresh();
-#define FOOTER_MSGS \
-  mvprintw(LINES - 2, 4, "%s", CANCEL_MSG); \
-  mvprintw(LINES - 2, (COLS - strlen(QUIT_MSG)) - 4, "%s", QUIT_MSG);
-
-#define case_EXIT \
-  case KEY_F(10): \
-    endwin(); \
-    exit(EXIT_SUCCESS);
-
-#define case_CLEAR_CANCEL \
-  case KEY_F(3): \
-    clear(); \
-    return;
-
-#define case_CANCEL \
-  case KEY_F(3): \
-    return;
-
-#define program_name "typp"
-#define VERSION "Typing Practice - v1.2.13"
-#define QUIT_MSG "F10 Quit"
-#define CANCEL_MSG "F3 Cancel"
-#define HELP_MSG "F1 Help"
-#define ASCII_ENTER 10
-#define ASCII_SPACE 32
-#define ASCII_DEL 127
-
-/* If the user changed the terminal, the program will exit
-   The user should re-enter it to update the LINES / COLS values
-   If do not use this handler, the interface will be not correct */
-void resize_term_handler()
+void endwin_error_wrap(const char *s, int line)
 {
   endwin();
-  printf("%s: The terminal size has changed, \
-please re-enter the program\n", program_name);
-  exit(EXIT_SUCCESS);
-}
-
-void error_wrap(const char *s)
-{
-  endwin();
-  error(0, 0, s);
+  fprintf(stderr, "%s: %s:%d: %s\n", program_name, __FILE__, line, s);
   exit(EXIT_FAILURE);
 }
 
@@ -108,15 +50,8 @@ void *malloc_wrap(size_t size)
 {
   void *p;
   if ((p = malloc(size * sizeof(wchar_t))) == NULL)
-    error_wrap("Cannot allocate memory");
+    endwin_error_wrap("Cannot allocate memory", __LINE__);
   return p;
-}
-
-/* check 80 columns by 24 rows terminal size */
-void term_size_check()
-{
-  if (LINES < 24 || COLS < 80)
-    error_wrap("Please, use terminal size not less 80x24");
 }
 
 void rating_info()
@@ -141,8 +76,8 @@ void rating_info()
   wrefresh(tuiv.rating_win);
   FOOTER_MSGS;
 
-  while ((cg = getch())) {
-    switch (cg) {
+  while (true) {
+    switch (getch()) {
       case_EXIT;
       case_CLEAR_CANCEL;
     }
@@ -151,7 +86,6 @@ void rating_info()
 
 void help_info()
 {
-
   tuiv.help_win = newwin(22, 80, (LINES - 24) / 2, (COLS - 80) / 2);
   BOX_WBORDER_ZERO(tuiv.help_win);
   refresh();
@@ -176,14 +110,139 @@ void help_info()
   FOOTER_MSGS;
   wrefresh(tuiv.help_win);
 
-  while ((cg = getch())) {
-    switch (cg) {
+  while (true) {
+    switch (getch()) {
       case_EXIT;
       case_CLEAR_CANCEL;
       case ASCII_ENTER:
         delwin(tuiv.help_win);
         rating_info();
         return;
+    }
+  }
+}
+
+int connect_to_server()
+{
+  struct sockaddr_in servaddr;
+  int sock;
+
+  /* Create client socket */
+  if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    endwin_error_wrap("socket() returned negative value", __LINE__);
+  memset(&servaddr, 0, sizeof(servaddr));
+
+  /* Assign IP, PORT */
+  servaddr.sin_family = AF_INET;
+  servaddr.sin_addr.s_addr = inet_addr("5.63.158.181");
+  servaddr.sin_port = htons(8012);
+
+  /* Connect the client socket to server socket */
+  if (connect(sock, (struct sockaddr*)&servaddr, sizeof(servaddr)) != 0) {
+    mvprintw(0, 0, "Sorry, server not respond, please try later.");
+    mvprintw(1, 0, "Press any key...");
+    getch();
+    return -1;
+  }
+
+  return sock;
+}
+
+void get_results_from_server(char *upper_npm)
+{
+  char cpm_or_wpm[4], all_results[2048], *token;
+  int client_sock;
+
+  for (int i = 0; upper_npm[i] != '\0'; i++)
+    cpm_or_wpm[i] = tolower(upper_npm[i]);
+
+  if ((client_sock = connect_to_server()) == -1) {
+    close(client_sock);
+    clear();
+    return;
+  }
+
+  if (write(client_sock, cpm_or_wpm, strlen(cpm_or_wpm)) != 3)
+    endwin_error_wrap("write() condition did not pass", __LINE__);
+
+  if ((recv(client_sock, all_results, sizeof(all_results), 0)) == -1)
+    endwin_error_wrap("recv() returned negative value", __LINE__);
+  close(client_sock);
+
+  token = strtok(all_results, "\n");
+  for (int y = 0; token != NULL; y++) {
+    mvprintw(y, 0, "%s", token);
+    token = strtok(NULL, "\n");
+  }
+
+  getch();
+  clear();
+}
+
+void
+send_res_to_server(int sock, int ln, const char *nickname,
+                   int npm, int err, int m, int s)
+{
+  char user_val[64];
+  sprintf(user_val, "%d %s %d %d %.2d:%.2d\n", ln, nickname, npm, err, m, s);
+  if (write(sock, user_val, sizeof(user_val)) == -1)
+    endwin_error_wrap("write() returned negative value", __LINE__);
+  close(sock);
+}
+
+void print_menu(char *elements[], int highlight)
+{
+  for (int i = 0; i < 2; i++) {
+    if (i == highlight)
+      attron(A_UNDERLINE | A_BOLD);
+    mvprintw(i + 9, (COLS - 7) / 2, "%s", elements[i]);
+    attroff(A_UNDERLINE | A_BOLD);
+  }
+}
+
+void version_header_box()
+{
+  refresh();
+  tuiv.main_title = VERSION;
+  tuiv.main_title_win = newwin(4, COLS, 1, 0);
+  BOX_WBORDER_ZERO(tuiv.main_title_win);
+
+  wattron(tuiv.main_title_win, COLOR_PAIR(1));
+  mvwprintw(tuiv.main_title_win, 1, (COLS - strlen(tuiv.main_title)) / 2,
+      "%s", tuiv.main_title);
+  wattroff(tuiv.main_title_win, COLOR_PAIR(1));
+  wrefresh(tuiv.main_title_win);
+}
+
+void npm_menu()
+{
+  while (true) {
+    tuiv.sel_unit_title = "Please, select unit for display table:";
+    attron(COLOR_BOLD(2));
+    mvprintw(7, (COLS - strlen(tuiv.sel_unit_title)) / 2, "%s", tuiv.sel_unit_title);
+    attroff(COLOR_BOLD(2));
+    FOOTER_MSGS;
+
+    version_header_box();
+    print_menu(npms, npm_highlight);
+
+    switch (getch()) {
+      case KEY_UP:
+        npm_highlight--;
+        if (npm_highlight == -1)
+          npm_highlight = 0;
+        break;
+      case KEY_DOWN:
+        npm_highlight++;
+        if (npm_highlight == 2)
+          npm_highlight = 1;
+        break;
+      case_EXIT;
+      case_CLEAR_CANCEL;
+      case ASCII_ENTER:
+        clear();
+        get_results_from_server(npms[npm_highlight]);
+        continue;
     }
   }
 }
@@ -201,7 +260,7 @@ char *trim_whitespaces(char *str)
     return str;
 
   /* trim trailing space */
-  end = str + strnlen(str, 128) - 1;
+  end = str + strnlen(str, 18) - 1;
 
   while(end > str && isspace(*end))
     end--;
@@ -218,7 +277,7 @@ char *get_user_nickname()
   int ch;
 
   /* Initialize the fields */
-  tuiv.field[0] = new_field(1, 25, 15, (COLS - 25) / 2, 0, 0);
+  tuiv.field[0] = new_field(1, 18, 15, (COLS - 18) / 2, 0, 0);
   tuiv.field[1] = NULL;
 
   /* Set field options */
@@ -253,15 +312,20 @@ char *get_user_nickname()
         form_driver(tuiv.form, REQ_PREV_FIELD);
         strnick = trim_whitespaces(field_buffer(tuiv.field[0], 0));
         if (strnick[0] == '\0') {
-          return NULL;
+          curs_set(1);
+          mvprintw(0, 0, "Please, input your nickname");
+          pos_form_cursor(tuiv.form);
+          continue;
         } else {
           unpost_form(tuiv.form);
           free_form(tuiv.form);
+          free_field(tuiv.field[0]);
+/* Эта вещь зачищает память соответственно указатель strnick на эту память будет выдавать мусор
+и на сервер прилетит garbage nickname, решение состоит в том чтобы создать массив с длинной 32 и записать туда эти байты */
           return strnick;
         }
 
       case_EXIT;
-
       case KEY_F(3):
         return NULL;
 
@@ -298,12 +362,11 @@ char *get_cpm_rating(int cpm)
 }
 
 void
-get_result(int errcount, int scount, int sscount,
-int wcount, float sec)
+display_result(int errcount, int scount, int sscount,
+               int wcount, float sec)
 {
   char *rating, *nickname;
-  int m, s, npm = 0;
-  bool srval;
+  int m, s, npm = 0, client_sock;
   float t;
 
   /* convert */
@@ -321,7 +384,7 @@ int wcount, float sec)
   }
 
   if (rating == NULL)
-    error_wrap("Pointer 'rating' equal NULL");
+    endwin_error_wrap("Pointer 'rating' equal NULL", __LINE__);
 
   tuiv.result_win = newwin(20, 35, 1, 1);
   BOX_WBORDER_ZERO(tuiv.result_win);
@@ -354,17 +417,19 @@ int wcount, float sec)
   mvprintw(22, 2, "Press F3 to cancel");
   wrefresh(tuiv.result_win);
 
-  while ((cg = getch())) {
-    switch (cg) {
+  while (true) {
+    switch (getch()) {
       case_CANCEL;
       case ASCII_ENTER:
         nickname = get_user_nickname();
         if (nickname != NULL) {
-          srval = send_res_to_server(lang_highlight, nickname, npm, errcount, m, s);
-          if (srval)
-            mvprintw(0, 0, "%s - your result was sent successfully.", nickname);
-          else
-            mvprintw(0, 0, "Sorry, server not respond, please try later.");
+          if ((client_sock = connect_to_server()) == -1) {
+            close(client_sock);
+            clear();
+            return;
+          }
+          send_res_to_server(client_sock, lang_highlight, nickname, npm, errcount, m, s);
+          mvprintw(0, 0, "%s - your result was sent successfully.", nickname);
           mvprintw(1, 0, "Press any key...");
           getch();
         }
@@ -453,8 +518,8 @@ input_text(wchar_t *main_text, size_t lent, WINDOW *text_win)
   }
 
   /* wait enter from user */
-  while ((cg = getch())) {
-    if (cg == ASCII_ENTER) {
+  while (true) {
+    if ((getch()) == ASCII_ENTER) {
       time(&end_t);
       curs_set(0);
       clear();
@@ -464,7 +529,7 @@ input_text(wchar_t *main_text, size_t lent, WINDOW *text_win)
 
   /* return float number (diff seconds) for example: 80.000000 */
   sec = difftime(end_t, start_t);
-  get_result(errcount, scount, sscount, wcount, sec);
+  display_result(errcount, scount, sscount, wcount, sec);
 }
 
 void
@@ -497,14 +562,8 @@ get_text_and_len(wchar_t *main_text, char *name, int offsets[])
   char fpath[32] = "/usr/local/share/typp/";
 
   strcat(fpath, name);
-  if ((stream = fopen(fpath, "r")) == NULL) {
-    if (errno == ENOENT)
-      error_wrap(strerror(errno));
-
-    if (errno == EACCES)
-      error_wrap(strerror(errno));
-    error_wrap(strerror(errno));
-  }
+  if ((stream = fopen(fpath, "r")) == NULL)
+    endwin_error_wrap(strerror(errno), __LINE__);
 
   srand(time(NULL));
   fseek(stream, offsets[rand() % 11], SEEK_SET);
@@ -521,10 +580,10 @@ get_text_and_len(wchar_t *main_text, char *name, int offsets[])
   return n;
 }
 
-void lets_start()
+void lets_start_type()
 {
-  size_t lent;
   wchar_t *main_text;
+  size_t lent;
 
   /* arrays of number bytes where texts started, needed to
      read files (eng.typp / rus.typp) from the desired position */
@@ -537,7 +596,7 @@ void lets_start()
   int en_offsets[] = {
     0, 787, 1410, 2140,
     2825, 3654, 4385, 5140,
-    5960, 6755, 7509
+    5960, 6755, 7509  // , 8271
   };
 
   main_text = malloc_wrap(2048);
@@ -563,6 +622,17 @@ void lets_start()
   clear();
 }
 
+/* If the user changed the terminal, the program will exit
+   The user should re-enter it to update the LINES / COLS values
+   If do not use this handler, the interface will be not correct */
+void resize_term_handler()
+{
+  endwin();
+  printf("%s: The terminal size has changed, \
+please re-enter the program\n", program_name);
+  exit(EXIT_SUCCESS);
+}
+
 int main(void)
 {
   setlocale(LC_ALL, "");
@@ -581,7 +651,10 @@ int main(void)
     noecho();
     curs_set(0);
     keypad(stdscr, TRUE);
-    term_size_check();
+
+    /* check 80 columns by 24 rows terminal size */
+    if (LINES < 24 || COLS < 80)
+      endwin_error_wrap("Please, use terminal size not less 80x24", __LINE__);
 
     if (has_colors()) {
       start_color();
@@ -591,16 +664,7 @@ int main(void)
       init_pair(4, COLOR_RED, COLOR_BLACK);
     }
 
-    refresh();
-    tuiv.main_title = VERSION;
-    tuiv.main_title_win = newwin(4, COLS, 1, 0);
-    BOX_WBORDER_ZERO(tuiv.main_title_win);
-
-    wattron(tuiv.main_title_win, COLOR_PAIR(1));
-    mvwprintw(tuiv.main_title_win, 1, (COLS - strlen(tuiv.main_title)) / 2,
-                                      "%s", tuiv.main_title);
-    wattroff(tuiv.main_title_win, COLOR_PAIR(1));
-    wrefresh(tuiv.main_title_win);
+    version_header_box();
 
     tuiv.sel_lang_title = "Please, select language for text:";
     attron(COLOR_BOLD(2));
@@ -608,15 +672,10 @@ int main(void)
     attroff(COLOR_BOLD(2));
 
     mvprintw(LINES - 2, 4, "%s", HELP_MSG);
+    mvprintw(LINES - 2, (COLS - strlen(RES_MSG)) / 2, "%s", RES_MSG);
     mvprintw(LINES - 2, (COLS - strlen(QUIT_MSG)) - 4, "%s", QUIT_MSG);
 
-    for (int i = 0; i < 2; i++) {
-      if (i == lang_highlight)
-        attron(A_UNDERLINE | A_BOLD);
-      mvprintw(i + 9, (COLS - 7) / 2, "%s", langs[i]);
-      attroff(A_UNDERLINE | A_BOLD);
-    }
-
+    print_menu(langs, lang_highlight);
     switch (getch()) {
       case KEY_UP:
         lang_highlight--;
@@ -632,10 +691,14 @@ int main(void)
         clear();
         help_info();
         break;
+      case KEY_F(5):
+        clear();
+        npm_menu();
+        continue;
       case_EXIT;
       case ASCII_ENTER:
         clear();
-        lets_start();
+        lets_start_type();
         continue;
     }
   }

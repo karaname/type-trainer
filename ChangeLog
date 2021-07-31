@@ -1,3 +1,8 @@
+v1.3.14
+  * added menu for display server results
+  * changed error handler
+  * common useful code corrections
+
 v1.2.13
   * added share results
 
