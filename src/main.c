@@ -103,9 +103,9 @@ void help_info()
   mvwaddstr(tuiv.help_win, 13, 1, "The countdown time starts from the first entered character.");
   mvwaddstr(tuiv.help_win, 14, 1, "After full entering the text, the results will appear, along with the rating.");
   mvwaddstr(tuiv.help_win, 15, 1, "To see the description of ratings, press");
-  wattron(tuiv.help_win, A_UNDERLINE | A_STANDOUT);
+  wattron(tuiv.help_win, COLOR_PAIR(5) | A_UNDERLINE);
   mvwaddstr(tuiv.help_win, 15, 42, "Enter");
-  wattroff(tuiv.help_win, A_UNDERLINE | A_STANDOUT);
+  wattroff(tuiv.help_win, COLOR_PAIR(5) | A_UNDERLINE);
   mvwaddstr(tuiv.help_win, 16, 1, "You can share your result after full entering text to compete.");
   mvwaddstr(tuiv.help_win, 17, 1, "Press 'F5' in the main menu to see shared results in pivot table.");
   mvwaddstr(tuiv.help_win, 19, 1, VERSION);
@@ -771,6 +771,7 @@ int main(void)
       init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
       init_pair(3, COLOR_GREEN, COLOR_BLACK);
       init_pair(4, COLOR_RED, COLOR_BLACK);
+      init_pair(5, COLOR_BLACK, COLOR_CYAN);
     }
 
     version_header_box();
@@ -779,9 +780,11 @@ int main(void)
     mvprintw(7, (COLS - strlen(tuiv.sel_lang_title)) / 2, "%s", tuiv.sel_lang_title);
     attroff(COLOR_BOLD(2));
 
+    attron(COLOR_PAIR(5));
     mvprintw(LINES - 2, 4, "%s", HELP_MSG);
     mvprintw(LINES - 2, (COLS - strlen(RES_MSG)) / 2, "%s", RES_MSG);
     mvprintw(LINES - 2, (COLS - strlen(QUIT_MSG)) - 4, "%s", QUIT_MSG);
+    attroff(COLOR_PAIR(5));
 
     menu_of_two_elements(langs, lang_highlight);
     switch (getch()) {

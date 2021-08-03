@@ -27,9 +27,12 @@ struct tui_elements {
 
 #define END_CLEAR endwin(); clear();
 #define END_CLEAR_REFRESH endwin(); clear(); refresh();
+
 #define FOOTER_MSGS \
+  attron(COLOR_PAIR(5)); \
   mvprintw(LINES - 2, 4, "%s", CANCEL_MSG); \
-  mvprintw(LINES - 2, (COLS - strlen(QUIT_MSG)) - 4, "%s", QUIT_MSG);
+  mvprintw(LINES - 2, (COLS - strlen(QUIT_MSG)) - 4, "%s", QUIT_MSG); \
+  attroff(COLOR_PAIR(5));
 
 #define case_EXIT \
   case KEY_F(10): \
@@ -46,7 +49,7 @@ struct tui_elements {
     return;
 
 #define program_name "typp"
-#define VERSION "Typing Practice - v1.3.16"
+#define VERSION "Typing Practice - v1.3.17"
 #define QUIT_MSG "F10 Quit"
 #define CANCEL_MSG "F3 Cancel"
 #define HELP_MSG "F1 Help"
