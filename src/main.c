@@ -159,14 +159,15 @@ void version_header_box()
   BOX_WBORDER_ZERO(tuiv.main_title_win);
 
   wattron(tuiv.main_title_win, COLOR_PAIR(1));
-  mvwprintw(tuiv.main_title_win, 1, (COLS - strlen(tuiv.main_title)) / 2, "%s", tuiv.main_title);
+  mvwprintw(tuiv.main_title_win, 1, (COLS - strlen(tuiv.main_title)) / 2,
+    "%s", tuiv.main_title);
   wattroff(tuiv.main_title_win, COLOR_PAIR(1));
   wrefresh(tuiv.main_title_win);
 }
 
 void display_all_results(char **lines_res, int n_lines)
 {
-  char *table_titles[4] = {"Nickname", NULL, "Errors", "Time"};
+  char *table_titles[5] = {"Place", "Nickname", NULL, "Errors", "Time"};
   int ch, i;
 
   /* create items */
@@ -201,16 +202,18 @@ void display_all_results(char **lines_res, int n_lines)
   FOOTER_MSGS;
 
   if (npm_highlight)
-    table_titles[1] = "WPM";
+    table_titles[2] = "WPM";
   else
-    table_titles[1] = "CPM";
+    table_titles[2] = "CPM";
 
   wattron(tuiv.menu_win, COLOR_BOLD(2));
-  mvwprintw(tuiv.menu_win, 1, (80 - strlen("Top Results Table")) / 2, "%s", "Top Results Table");
+  mvwprintw(tuiv.menu_win, 1, (80 - strlen("Pivot Table - AAA")) / 2,
+    "%s - %s", "Pivot Table", table_titles[2]);
   wattroff(tuiv.menu_win, COLOR_BOLD(2));
 
   wattron(tuiv.menu_win, A_BOLD);
-  mvwprintw(tuiv.menu_win, 3, 2, "%-22s%s%9s%7s", table_titles[0], table_titles[1], table_titles[2], table_titles[3]);
+  mvwprintw(tuiv.menu_win, 3, 2, "%-7s%-22s%s%9s%7s", table_titles[0], table_titles[1],
+    table_titles[2], table_titles[3], table_titles[4]);
   wattroff(tuiv.menu_win, A_BOLD);
 
   tuiv.menu_footer_msg = "Use 'Up' or 'PgUp' and 'Down' or 'PgDn' to scroll down or up a page of items.";
@@ -255,6 +258,7 @@ void get_results_from_server(char *upper_npm)
   char cpm_or_wpm[3];
   char *lines_res[1024];
   int client_sock, len_res, i;
+  bool first_num = true;
 
   for (i = 0; upper_npm[i] != '\0'; i++)
     cpm_or_wpm[i] = tolower(upper_npm[i]);
@@ -283,6 +287,11 @@ void get_results_from_server(char *upper_npm)
       if (strrchr(token, ':')) {
         sprintf(tmp_buf, "%11s\n", token);
         strcat(results_format, tmp_buf);
+        first_num = true;
+      } else if (first_num) {
+        sprintf(tmp_buf, "%-7s", token);
+        strcat(results_format, tmp_buf);
+        first_num = false;
       } else {
         sprintf(tmp_buf, "%6s", token);
         strcat(results_format, tmp_buf);
@@ -331,7 +340,8 @@ void npm_menu()
   while (true) {
     tuiv.sel_unit_title = "Please, select unit for display table:";
     attron(COLOR_BOLD(2));
-    mvprintw(7, (COLS - strlen(tuiv.sel_unit_title)) / 2, "%s", tuiv.sel_unit_title);
+    mvprintw(7, (COLS - strlen(tuiv.sel_unit_title)) / 2,
+      "%s", tuiv.sel_unit_title);
     attroff(COLOR_BOLD(2));
     FOOTER_MSGS;
 
@@ -393,7 +403,7 @@ bool get_user_nickname(char *nickname)
 
   /* set field options */
   set_field_back(tuiv.field[0], A_UNDERLINE); /* print a line for the option   */
-  field_opts_off(tuiv.field[0], O_AUTOSKIP); /* don't go to next field when this */
+  field_opts_off(tuiv.field[0], O_AUTOSKIP);  /* don't go to next field when this */
 
   /* create the form and post it */
   curs_set(1);
@@ -721,7 +731,8 @@ void lets_start_type()
   keypad(tuiv.text_win, TRUE);
 
   attron(COLOR_PAIR(1));
-  mvprintw((LINES - 24) / 2, (COLS - strlen(tuiv.note_msg)) / 2, "%s", tuiv.note_msg);
+  mvprintw((LINES - 24) / 2, (COLS - strlen(tuiv.note_msg)) / 2,
+    "%s", tuiv.note_msg);
   attroff(COLOR_PAIR(1));
   FOOTER_MSGS;
 
@@ -777,7 +788,8 @@ int main(void)
     version_header_box();
     tuiv.sel_lang_title = "Please, select language for text:";
     attron(COLOR_BOLD(2));
-    mvprintw(7, (COLS - strlen(tuiv.sel_lang_title)) / 2, "%s", tuiv.sel_lang_title);
+    mvprintw(7, (COLS - strlen(tuiv.sel_lang_title)) / 2,
+      "%s", tuiv.sel_lang_title);
     attroff(COLOR_BOLD(2));
 
     attron(COLOR_PAIR(5));
