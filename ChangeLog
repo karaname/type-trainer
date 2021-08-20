@@ -1,3 +1,6 @@
+v1.3.19
+  * write() -> send()
+
 v1.3.18
   * display of number places in pivot table & corrections
 

@@ -270,8 +270,8 @@ void get_results_from_server(char *upper_npm)
     return;
   }
 
-  if (write(client_sock, cpm_or_wpm, strlen(cpm_or_wpm)) != 3)
-    endwin_error_wrap("write() condition did not pass", __LINE__);
+  if (send(client_sock, cpm_or_wpm, strlen(cpm_or_wpm), 0) != 3)
+    endwin_error_wrap("send() condition did not pass", __LINE__);
 
   if ((len_res = recv(client_sock, all_results, sizeof(all_results), 0)) == -1)
     endwin_error_wrap("recv() returned negative value", __LINE__);
@@ -320,8 +320,8 @@ send_res_to_server(int sock, int ln, const char *nickname,
 {
   char user_val[64];
   sprintf(user_val, "%d %s %d %d %.2d:%.2d\n", ln, nickname, npm, err, m, s);
-  if (write(sock, user_val, sizeof(user_val)) == -1)
-    endwin_error_wrap("write() returned negative value", __LINE__);
+  if (send(sock, user_val, sizeof(user_val), 0) == -1)
+    endwin_error_wrap("send() returned negative value", __LINE__);
   close(sock);
 }
 
